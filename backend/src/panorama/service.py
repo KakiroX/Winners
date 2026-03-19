@@ -9,6 +9,7 @@ import math
 import uuid
 from collections.abc import AsyncGenerator
 
+from fastapi import BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.panorama_client import get_panorama_generator
@@ -30,7 +31,30 @@ from src.panorama.schemas import (
 )
 from src.panorama.storage import PanoramaStorage
 
-logger = logging.getLogger(__name__)
+_bom_agent = None
+
+
+def get_bom_agent():
+    global _bom_agent
+    if _bom_agent is None:
+        from src.ai.panorama_client import get_panorama_generator
+        from src.bom import BOMAgent
+        gen = get_panorama_generator()
+        _bom_agent = BOMAgent(client=gen._client)
+    return _bom_agent
+
+
+async def background_bom_sourcing(version_id: str, image: Image.Image):
+    """Background task to source furniture in parallel."""
+    try:
+        agent = get_bom_agent()
+        bom_data = await agent.process_room(image)
+
+        async with async_session_factory() as session:
+            storage = PanoramaStorage(session)
+            await storage.update_room_version_bom(version_id, bom_data)
+    except Exception as e:
+        logger.error("Background BOM sourcing failed: %s", e)
 
 
 class PanoramaService:
@@ -39,6 +63,7 @@ class PanoramaService:
     @staticmethod
     async def generate_walkthrough_stream(
         request: GenerateWalkthroughRequest,
+        background_tasks: BackgroundTasks | None = None,
     ) -> AsyncGenerator[str, None]:
         """Generate panoramas room-by-room, yielding SSE progress events."""
         generation_id = uuid.uuid4().hex[:12]
@@ -51,6 +76,18 @@ class PanoramaService:
 
         async with async_session_factory() as session:
             storage = PanoramaStorage(session)
+
+            # --- Phase 0: Create Walkthrough and Rooms in DB ---
+            await storage.create_walkthrough(
+                walkthrough_id=generation_id,
+                floor_plan_id=request.floor_plan_id,
+                title=request.variant_label,
+                pannellum_config={"scenes": {}},  # Placeholder
+                rooms=[
+                    {"room_id": r.id, "room_label": r.label}
+                    for r in request.rooms
+                ],
+            )
 
             # --- Phase 1: Generate each room panorama ---
             for i, room in enumerate(request.rooms):
@@ -92,11 +129,19 @@ class PanoramaService:
 
                     result = await asyncio.to_thread(generator.generate, prompt)
 
-                    # Upload to GCS
-                    url = await asyncio.to_thread(
-                        storage.upload_room_panorama, generation_id, room.id, result.image,
+                    # Upload to GCS and save as Version 1
+                    version = await storage.save_room_version(
+                        walkthrough_id=generation_id,
+                        room_id=room.id,
+                        image=result.image,
+                        prompt_used="Initial Generation",
+                        hotspots=[],
                     )
-                    generated[room.id] = url
+                    generated[room.id] = version.image_url
+
+                    # Trigger background BOM sourcing
+                    if background_tasks:
+                        background_tasks.add_task(background_bom_sourcing, version.id, result.image)
 
                     yield _sse("room_done", {
                         "current": i + 1,
@@ -119,7 +164,7 @@ class PanoramaService:
                 yield _sse("error", {"message": "Failed to generate any panoramas"})
                 return
 
-            # --- Phase 2: Link rooms ---
+            # --- Phase 2: Link rooms and update config ---
             yield _sse("progress", {
                 "phase": "linking",
                 "current": total_rooms,
@@ -127,7 +172,6 @@ class PanoramaService:
                 "room_label": "Linking rooms...",
             })
 
-            rooms_by_id = {r.id: r for r in request.rooms}
             room_panoramas: list[RoomPanorama] = []
             scenes: dict[str, object] = {}
 
@@ -184,17 +228,8 @@ class PanoramaService:
                 "scenes": scenes,
             }
 
-            # --- Phase 3: Persist to DB ---
-            await storage.create_walkthrough(
-                walkthrough_id=generation_id,
-                floor_plan_id=request.floor_plan_id,
-                title=request.variant_label,
-                pannellum_config=pannellum_config,
-                rooms=[
-                    {"room_id": rp.room_id, "room_label": rp.room_label}
-                    for rp in room_panoramas
-                ],
-            )
+            # Update walkthrough config in DB
+            await storage.update_pannellum_config(generation_id, pannellum_config)
 
             walkthrough = WalkthroughSchema(
                 id=generation_id,
@@ -229,6 +264,7 @@ class PanoramaService:
         prompt: str,
         pitch: float,
         yaw: float,
+        background_tasks: BackgroundTasks | None = None,
     ) -> EditRoomResponse:
         """Surgically edit a room panorama at a specific location."""
         async with async_session_factory() as session:
@@ -277,6 +313,10 @@ class PanoramaService:
                 hotspots=all_hotspots,
             )
 
+            # Trigger background BOM sourcing
+            if background_tasks:
+                background_tasks.add_task(background_bom_sourcing, version.id, result.image)
+
             # Update pannellum config
             config = dict(wt.pannellum_config)
             scenes = config.get("scenes", {})
@@ -297,6 +337,18 @@ class PanoramaService:
                 ),
                 updated_panorama_url=version.image_url,
             )
+
+    @staticmethod
+    async def get_walkthrough_bom(walkthrough_id: str) -> list[dict]:
+        """Get the aggregated Bill of Materials for a walkthrough."""
+        async with async_session_factory() as session:
+            storage = PanoramaStorage(session)
+            wt = await storage.get_walkthrough(walkthrough_id)
+            if wt is None:
+                raise WalkthroughNotFoundError(f"Walkthrough {walkthrough_id} not found")
+
+            from src.bom import BOMManager
+            return BOMManager.aggregate_walkthrough_bom(wt)
 
     @staticmethod
     async def get_walkthrough(walkthrough_id: str) -> WalkthroughSchema | None:

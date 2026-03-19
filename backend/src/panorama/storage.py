@@ -107,6 +107,7 @@ class PanoramaStorage:
         image: Image.Image,
         prompt_used: str = "",
         hotspots: list[dict] | None = None,
+        bom: list[dict] | None = None,
     ) -> RoomVersionModel:
         """Create a new version for a room — upload image to GCS, save metadata to DB."""
         # Find the room
@@ -135,6 +136,7 @@ class PanoramaStorage:
             image_url=image_url,
             prompt_used=prompt_used,
             hotspots=hotspots or [],
+            bom=bom or [],
         )
         self.session.add(version)
         room.current_version_id = v_id
@@ -143,6 +145,16 @@ class PanoramaStorage:
 
         logger.info("Saved version %s for room %s", v_id, room_id)
         return version
+
+    async def update_room_version_bom(self, version_id: str, bom: list[dict]) -> None:
+        """Update the BOM for an existing room version."""
+        from sqlalchemy import update
+        await self.session.execute(
+            update(RoomVersionModel)
+            .where(RoomVersionModel.id == version_id)
+            .values(bom=bom)
+        )
+        await self.session.commit()
 
     async def get_room_current_image_url(
         self,

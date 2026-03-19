@@ -16,7 +16,15 @@ export function PannellumViewer({ config, className = '', onPanoramaClick, onSce
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<PannellumViewerInstance | null>(null);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
-  const { setCurrentScene, setView } = useViewerStore();
+  const { setCurrentScene, sceneToLoad, clearSceneToLoad } = useViewerStore();
+
+  // Track current view state to restore it after config updates
+  const viewStateRef = useRef({
+    pitch: 0,
+    yaw: 0,
+    hfov: 110,
+    sceneId: '',
+  });
 
   // Track drag start to distinguish clicks from drags
   const handleMouseDown = useCallback((event: MouseEvent) => {
@@ -50,29 +58,73 @@ export function PannellumViewer({ config, className = '', onPanoramaClick, onSce
     [onPanoramaClick],
   );
 
+  // Handle programmatic scene changes
+  useEffect(() => {
+    if (viewerRef.current && sceneToLoad) {
+      viewerRef.current.loadScene(sceneToLoad);
+      clearSceneToLoad();
+    }
+  }, [sceneToLoad, clearSceneToLoad]);
+
   useEffect(() => {
     if (!containerRef.current || !window.pannellum) return;
 
-    // Destroy previous instance
+    // Capture current state if viewer already exists
     if (viewerRef.current) {
+      try {
+        viewStateRef.current = {
+          pitch: viewerRef.current.getPitch(),
+          yaw: viewerRef.current.getYaw(),
+          hfov: viewerRef.current.getHfov(),
+          sceneId: viewerRef.current.getScene(),
+        };
+      } catch (e) {
+        console.warn('Could not capture current view state:', e);
+      }
+
       viewerRef.current.destroy();
       viewerRef.current = null;
     }
 
-    // Panorama URLs are now absolute GCS URLs — no resolution needed
-    const viewer = window.pannellum.viewer(containerRef.current, config as unknown as Record<string, unknown>);
+    // Merge captured state into config for the new instance
+    const finalConfig = JSON.parse(JSON.stringify(config));
+
+    // If we're staying in the same scene, restore the view parameters
+    if (viewStateRef.current.sceneId) {
+      // Ensure we start at the scene we were just looking at
+      finalConfig.default = {
+        ...finalConfig.default,
+        firstScene: viewStateRef.current.sceneId,
+      };
+
+      // Override scene-specific initial view parameters if they exist
+      const scenes = finalConfig.scenes as Record<string, any>;
+      if (scenes && scenes[viewStateRef.current.sceneId]) {
+        scenes[viewStateRef.current.sceneId] = {
+          ...scenes[viewStateRef.current.sceneId],
+          pitch: viewStateRef.current.pitch,
+          yaw: viewStateRef.current.yaw,
+          hfov: viewStateRef.current.hfov,
+          autoLoad: true, // Ensure it loads immediately
+        };
+      }
+    }
+
+    const viewer = window.pannellum.viewer(containerRef.current, finalConfig as unknown as Record<string, unknown>);
     viewerRef.current = viewer;
 
     // Track scene changes
     viewer.on('scenechange', (sceneId: unknown) => {
       const id = sceneId as string;
+      viewStateRef.current.sceneId = id;
       setCurrentScene(id);
       onSceneChange?.(id);
     });
 
-    // Set initial scene
-    if (config.default.firstScene) {
-      setCurrentScene(config.default.firstScene);
+    // Set initial scene in store
+    const initialScene = viewStateRef.current.sceneId || config.default.firstScene;
+    if (initialScene) {
+      setCurrentScene(initialScene);
     }
 
     return () => {

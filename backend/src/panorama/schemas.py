@@ -28,6 +28,15 @@ class EditHotspot(BaseModel):
     properties: dict[str, object] = {}
 
 
+class BOMItem(BaseModel):
+    """A furniture or decor item sourced for a room."""
+
+    name: str
+    price: str
+    url: str
+    design_source: str | None = None
+
+
 # ---------------------------------------------------------------------------
 # Room panorama
 # ---------------------------------------------------------------------------
@@ -42,6 +51,7 @@ class RoomPanorama(BaseModel):
     panorama_url: str
     navigation_hotspots: list[NavigationHotspot] = []
     edit_hotspots: list[EditHotspot] = []
+    bom: list[BOMItem] = []
     default_yaw: float = 0.0
     default_pitch: float = 0.0
 
@@ -76,6 +86,7 @@ class VersionSchema(BaseModel):
     created_at: float
     prompt_used: str = ""
     edit_hotspots: list[EditHotspot] = []
+    bom: list[BOMItem] = []
 
 
 # ---------------------------------------------------------------------------

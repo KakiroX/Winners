@@ -1,6 +1,6 @@
 """Panorama domain API router."""
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, BackgroundTasks, status
 from fastapi.responses import StreamingResponse
 
 from src.panorama.exceptions import RoomNotFoundError, WalkthroughNotFoundError
@@ -34,9 +34,10 @@ async def generate_walkthrough(
 )
 async def generate_walkthrough_stream(
     body: GenerateWalkthroughRequest,
+    background_tasks: BackgroundTasks,
 ) -> StreamingResponse:
     return StreamingResponse(
-        PanoramaService.generate_walkthrough_stream(body),
+        PanoramaService.generate_walkthrough_stream(body, background_tasks),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -58,6 +59,14 @@ async def get_walkthrough(walkthrough_id: str) -> WalkthroughSchema:
     return result
 
 
+@router.get(
+    "/walkthrough/{walkthrough_id}/bom",
+    description="Get the total Bill of Materials for a walkthrough.",
+)
+async def get_walkthrough_bom(walkthrough_id: str):
+    return await PanoramaService.get_walkthrough_bom(walkthrough_id)
+
+
 @router.post(
     "/walkthrough/{walkthrough_id}/room/{room_id}/edit",
     response_model=EditRoomResponse,
@@ -67,6 +76,7 @@ async def edit_room(
     walkthrough_id: str,
     room_id: str,
     body: EditRoomRequest,
+    background_tasks: BackgroundTasks,
 ) -> EditRoomResponse:
     return await PanoramaService.edit_room(
         walkthrough_id=walkthrough_id,
@@ -74,4 +84,5 @@ async def edit_room(
         prompt=body.prompt,
         pitch=body.pitch,
         yaw=body.yaw,
+        background_tasks=background_tasks,
     )
