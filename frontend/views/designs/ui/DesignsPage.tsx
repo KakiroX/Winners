@@ -30,10 +30,11 @@ export function DesignsPage() {
 
   useGSAP(
     () => {
-      gsap.from('.page-header', { opacity: 0, y: 20, duration: 0.6, ease: 'power3.out' });
-      gsap.from('.design-card', { opacity: 0, y: 28, stagger: 0.09, duration: 0.55, ease: 'power3.out', delay: 0.2 });
+      if (isLoading) return;
+      gsap.fromTo('.page-header', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' });
+      gsap.fromTo('.design-card', { opacity: 0, y: 28 }, { opacity: 1, y: 0, stagger: 0.09, duration: 0.55, ease: 'power3.out', delay: 0.2 });
     },
-    { scope: containerRef, dependencies: [isLoading] },
+    { scope: containerRef, dependencies: [isLoading, walkthroughs] },
   );
 
   const handleRename = async (id: string, current: string) => {
