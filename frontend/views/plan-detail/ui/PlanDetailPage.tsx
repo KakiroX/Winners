@@ -1,6 +1,7 @@
 'use client';
 
 import { useSelectionStore } from '@/features/select-floor-plan';
+import { GenerateWalkthroughButton } from '@/features/generate-panorama';
 import { PlanViewerWidget } from '@/widgets/plan-viewer';
 
 export function PlanDetailPage() {
@@ -13,8 +14,14 @@ export function PlanDetailPage() {
   );
 
   return (
-    <main className="min-h-screen flex flex-col items-center py-12 px-4">
+    <main className="min-h-screen flex flex-col items-center py-12 px-4 gap-8">
       <PlanViewerWidget plan={selectedSchema} />
+      <div className="flex flex-col items-center gap-3">
+        <GenerateWalkthroughButton />
+        <p className="text-xs text-slate-400">
+          Generate 360° panoramas for each room and walk through them
+        </p>
+      </div>
     </main>
   );
 }

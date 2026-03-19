@@ -2,6 +2,7 @@
 
 import type { FloorPlanSchema } from '@/entities/floor-plan/model/types';
 import { PlanCard, useSelectionStore } from '@/features/select-floor-plan';
+import { GenerateWalkthroughButton } from '@/features/generate-panorama';
 
 interface Props {
   schemas: FloorPlanSchema[];
@@ -24,6 +25,11 @@ export function PlanGridWidget({ schemas, interpretation }: Props) {
           />
         ))}
       </div>
+      {selectedId && (
+        <div className="flex justify-center pt-4">
+          <GenerateWalkthroughButton />
+        </div>
+      )}
     </div>
   );
 }
