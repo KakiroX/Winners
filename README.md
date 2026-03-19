@@ -8,3 +8,11 @@ On-demand web-service for generative interior design and viewing, making batch g
 -  immersive room Walkthrough®
 -  batch generation of designs
 -  ordering of the furniture items based on the design
+
+Walthrough
+    360 panorama viewer with streetview like movement controls
+    S3 claude storage like storage system to effortlessly navigate through your designs, retrive and go back or return to the current one.
+    In-panorama interactive editing of the furniture items, change position, rotation, size, color, material, etc. by cliking on the furniture items or using the tools in the right panel.
+
+How does Walkthrough work?
+    It uses Pannellum 2.5.7 to display 360° panoramas. The viewer is embedded in a web page and uses JavaScript to control the view. The panorama image is loaded from a URL and displayed in the viewer. The viewer allows the user to navigate through the panorama using mouse or touch controls. The viewer also allows the user to zoom in and out of the panorama. The viewer also allows the user to rotate the panorama.

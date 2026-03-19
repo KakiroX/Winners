@@ -9,6 +9,7 @@ from src.panorama.schemas import (
     EditRoomResponse,
     GenerateWalkthroughRequest,
     GenerateWalkthroughResponse,
+    RenameWalkthroughRequest,
     WalkthroughSchema,
 )
 from src.panorama.service import PanoramaService
@@ -66,15 +67,37 @@ async def get_walkthrough(walkthrough_id: str) -> WalkthroughSchema:
         raise WalkthroughNotFoundError(f"Walkthrough {walkthrough_id} not found")
     return result
 
+@router.delete(
+    "/walkthrough/{walkthrough_id}",
+    description="Delete a walkthrough and all its associated data.",
+)
+async def delete_walkthrough(walkthrough_id: str):
+    success = await PanoramaService.delete_walkthrough(walkthrough_id)
+    if not success:
+        raise WalkthroughNotFoundError(f"Walkthrough {walkthrough_id} not found")
+    return {"status": "deleted"}
+
+@router.patch(
+    "/walkthrough/{walkthrough_id}/rename",
+    description="Rename a walkthrough.",
+)
+async def rename_walkthrough(walkthrough_id: str, body: RenameWalkthroughRequest):
+    success = await PanoramaService.rename_walkthrough(walkthrough_id, body.title)
+    if not success:
+        raise WalkthroughNotFoundError(f"Walkthrough {walkthrough_id} not found")
+    return {"status": "renamed", "title": body.title}
+
 
 @router.get(
     "/walkthroughs",
-    description="List all walkthroughs for the authenticated user.",
+    description="List all walkthroughs for a user.",
 )
 async def list_walkthroughs(
-    current_user: UserModel = Depends(get_current_user),
+    current_user: UserModel | None = Depends(get_optional_current_user),
+    user_id: str = "guest",
 ):
-    return await PanoramaService.list_walkthroughs(current_user.id)
+    uid = current_user.id if current_user else user_id
+    return await PanoramaService.list_walkthroughs(uid)
 
 
 @router.get(

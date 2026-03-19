@@ -370,18 +370,32 @@ class PanoramaService:
 
     @staticmethod
     async def list_walkthroughs(user_id: str) -> list[dict]:
-        """List all designs for a specific user."""
+        """List all designs for a specific user with their BOMs."""
         async with async_session_factory() as session:
             storage = PanoramaStorage(session)
             walkthroughs = await storage.list_walkthroughs(user_id)
+            
+            from src.bom import BOMManager
             return [
                 {
                     "id": wt.id,
                     "title": wt.title,
                     "created_at": wt.created_at.isoformat(),
-                    "room_count": len(wt.rooms)
+                    "room_count": len(wt.rooms),
+                    "floor_plan_metadata": wt.floor_plan_data,
+                    "bom": BOMManager.aggregate_walkthrough_bom(wt)
                 } for wt in walkthroughs
             ]
+
+    @staticmethod
+    async def get_all_designs_bom(user_id: str) -> list[dict]:
+        """Aggregate BOM from every design owned by a user."""
+        async with async_session_factory() as session:
+            storage = PanoramaStorage(session)
+            walkthroughs = await storage.list_walkthroughs(user_id)
+            
+            from src.bom import BOMManager
+            return BOMManager.aggregate_multi_walkthrough_bom(walkthroughs)
 
     @staticmethod
     async def get_walkthrough_bom(walkthrough_id: str) -> dict:
@@ -488,6 +502,22 @@ class PanoramaService:
                 rooms=rooms,
                 pannellum_config=wt.pannellum_config,
             )
+
+    @staticmethod
+    async def delete_walkthrough(walkthrough_id: str) -> bool:
+        """Delete a walkthrough."""
+        async with async_session_factory() as session:
+            storage = PanoramaStorage(session)
+            return await storage.delete_walkthrough(walkthrough_id)
+
+    @staticmethod
+    async def rename_walkthrough(walkthrough_id: str, title: str) -> bool:
+        """Rename a walkthrough."""
+        async with async_session_factory() as session:
+            storage = PanoramaStorage(session)
+            return await storage.update_walkthrough_title(walkthrough_id, title)
+
+
 
 
 def _sse(event: str, data: object) -> str:

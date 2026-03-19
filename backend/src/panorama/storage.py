@@ -78,6 +78,30 @@ class PanoramaStorage:
         )
         return result.scalar_one_or_none()
 
+    async def update_walkthrough_title(self, walkthrough_id: str, title: str) -> bool:
+        """Update the title of a walkthrough."""
+        wt = await self.get_walkthrough(walkthrough_id)
+        if not wt:
+            return False
+        wt.title = title
+        await self.session.commit()
+        logger.info("Updated title for walkthrough %s", walkthrough_id)
+        return True
+
+    async def delete_walkthrough(self, walkthrough_id: str) -> bool:
+        """Delete a walkthrough and all its associated data from the database."""
+        wt = await self.get_walkthrough(walkthrough_id)
+        if not wt:
+            return False
+            
+        await self.session.delete(wt)
+        await self.session.commit()
+        
+        # Ideally, we should also delete the files from GCS here or in a background task
+        # For now, we only delete from DB (cascade rules will handle rooms and versions)
+        logger.info("Deleted walkthrough %s from DB", walkthrough_id)
+        return True
+
     async def update_pannellum_config(self, walkthrough_id: str, config: dict) -> None:
         """Update the Pannellum config for a walkthrough."""
         wt = await self.get_walkthrough(walkthrough_id)
