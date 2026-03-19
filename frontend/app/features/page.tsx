@@ -1,7 +1,7 @@
 import { FeaturesPage } from '@/views/features';
 
 export const metadata = {
-  title: 'Features | Inhabit AI',
+  title: 'Features | Dehabit AI',
   description: 'Everything you need to design your dream space with AI.',
 };
 

@@ -14,7 +14,7 @@ const FEATURES = [
     title: 'AI Floor Planning',
     subtitle: 'From words to walls.',
     description:
-      'Describe your dream space in plain language. Inhabit interprets your intent and generates 3–4 distinct, fully-structured floor plan variants in seconds — each with room dimensions, adjacency logic, and natural light scoring.',
+      'Describe your dream space in plain language. Dehabit interprets your intent and generates 3–4 distinct, fully-structured floor plan variants in seconds — each with room dimensions, adjacency logic, and natural light scoring.',
     tags: ['2D Schema', 'Grid Layout', 'Room Intelligence'],
     visual: <FloorPlanVisual />,
     bg: 'bg-black',
@@ -142,7 +142,7 @@ export function FeaturesPage() {
           <div className="w-7 h-7 border border-white/40 rounded flex items-center justify-center">
             <div className="w-2.5 h-2.5 border border-white rounded-sm rotate-45" />
           </div>
-          <span className="text-white text-xs font-bold tracking-widest uppercase">Inhabit</span>
+          <span className="text-white text-xs font-bold tracking-widest uppercase">Dehabit</span>
         </Link>
         <div className="flex items-center gap-8 text-white/60 text-xs font-medium tracking-widest uppercase">
           <Link href="/" className="nav-item hover:text-white transition-colors">Home</Link>
@@ -174,7 +174,7 @@ export function FeaturesPage() {
 
           <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8">
             <p className="hero-sub text-white/50 text-lg font-medium max-w-lg leading-relaxed">
-              From first prompt to furnished room — Inhabit handles every step with generative AI built for spatial design.
+              From first prompt to furnished room — Dehabit handles every step with generative AI built for spatial design.
             </p>
             <Link
               href="/generate"
@@ -250,7 +250,7 @@ export function FeaturesPage() {
 
       {/* Footer */}
       <footer className="border-t border-white/10 py-10 px-10 flex items-center justify-between text-white/20 text-xs font-bold uppercase tracking-widest">
-        <span>&copy; 2026 Inhabit AI</span>
+        <span>&copy; 2026 Dehabit AI</span>
         <Link href="/" className="hover:text-white/50 transition-colors">Back to Home</Link>
       </footer>
     </div>

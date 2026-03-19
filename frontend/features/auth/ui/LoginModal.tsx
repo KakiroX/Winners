@@ -42,7 +42,7 @@ export function LoginModal() {
               <div className="w-3 h-3 border border-white/70 rounded-sm rotate-45" />
             </div>
             <div className="text-center space-y-1.5">
-              <p className={ds.label}>Inhabit</p>
+              <p className={ds.label}>Dehabit</p>
               <h2 className="text-xl font-black uppercase tracking-tight text-white leading-none">Welcome back</h2>
               <p className={ds.caption}>Sign in to continue designing</p>
             </div>

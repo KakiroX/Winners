@@ -9,7 +9,7 @@ import { LayoutContent } from './layout-content';
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
 
 export const metadata: Metadata = {
-  title: 'Inhabit | AI-Powered Interior Design',
+  title: 'Dehabit | AI-Powered Interior Design',
   description: 'Design your dream home in seconds with generative AI.',
 };
 

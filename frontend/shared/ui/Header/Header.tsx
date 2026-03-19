@@ -30,7 +30,7 @@ export function Header() {
           <div className="w-7 h-7 border border-white/30 rounded flex items-center justify-center group-hover:border-white/60 transition-colors">
             <div className="w-2.5 h-2.5 border border-white rounded-sm rotate-45" />
           </div>
-          <span className="text-white text-xs font-black tracking-widest uppercase">Inhabit</span>
+          <span className="text-white text-xs font-black tracking-widest uppercase">Dehabit</span>
         </Link>
 
         {/* Nav */}

@@ -22,7 +22,7 @@ const FEATURES = [
     title: 'AI Floor\nPlanning',
     subtitle: 'From words to walls.',
     description:
-      'Describe your space in plain language. Inhabit generates 3–4 distinct floor plan variants in seconds — complete with room dimensions, adjacency logic, and natural light scoring.',
+      'Describe your space in plain language. Dehabit generates 3–4 distinct floor plan variants in seconds — complete with room dimensions, adjacency logic, and natural light scoring.',
     tags: ['2D Schema', 'Grid Layout', 'Room Intelligence'],
     visual: <FloorPlanVisual />,
   },
@@ -122,7 +122,7 @@ export function HomePage() {
             <div className="w-8 h-8 border border-white/30 rounded flex items-center justify-center">
               <div className="w-3 h-3 border border-white rounded-sm rotate-45" />
             </div>
-            <span className="text-white text-sm font-bold tracking-widest uppercase">Inhabit</span>
+            <span className="text-white text-sm font-bold tracking-widest uppercase">Dehabit</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-10 text-white/60 text-xs font-medium tracking-widest uppercase">
@@ -160,7 +160,7 @@ export function HomePage() {
         {/* Bottom content */}
         <div className="absolute bottom-10 left-10 right-10 flex items-end justify-between">
           <div className="space-y-5 max-w-xl">
-            <p className="text-white/50 text-xs font-semibold tracking-widest uppercase">Inhabit AI</p>
+            <p className="text-white/50 text-xs font-semibold tracking-widest uppercase">Dehabit AI</p>
             <h1 className="text-white text-5xl lg:text-6xl font-black uppercase tracking-tight leading-[1.05]">
               Design Your Space<br />In Seconds.
             </h1>
@@ -269,7 +269,7 @@ export function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-white/10 py-10 px-10 flex items-center justify-between text-white/20 text-xs font-bold uppercase tracking-widest">
-        <span>&copy; 2026 Inhabit AI</span>
+        <span>&copy; 2026 Dehabit AI</span>
         <Link href="/generate" className="hover:text-white/50 transition-colors">Generate a design →</Link>
       </footer>
     </main>

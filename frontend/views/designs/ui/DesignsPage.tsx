@@ -112,7 +112,7 @@ export function DesignsPage() {
 
       {/* Footer */}
       <footer className="border-t border-white/8 py-8 px-10 flex items-center justify-between text-white/20 text-xs font-bold uppercase tracking-widest">
-        <span>&copy; 2026 Inhabit AI</span>
+        <span>&copy; 2026 Dehabit AI</span>
         <Link href="/generate" className="hover:text-white/50 transition-colors">Generate →</Link>
       </footer>
 

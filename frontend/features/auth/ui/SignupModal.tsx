@@ -43,7 +43,7 @@ export function SignupModal() {
               <div className="w-3 h-3 border border-white/70 rounded-sm rotate-45" />
             </div>
             <div className="text-center space-y-1.5">
-              <p className={ds.label}>Inhabit</p>
+              <p className={ds.label}>Dehabit</p>
               <h2 className="text-xl font-black uppercase tracking-tight text-white leading-none">Create account</h2>
               <p className={ds.caption}>Start designing your dream space</p>
             </div>

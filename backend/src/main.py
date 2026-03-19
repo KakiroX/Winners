@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await engine.dispose()
 
 
-app_config: dict[str, object] = {"title": "Inhabit API", "lifespan": lifespan}
+app_config: dict[str, object] = {"title": "Dehabit API", "lifespan": lifespan}
 if settings.environment not in ENVIRONMENT_SHOW_DOCS:
     app_config["openapi_url"] = None
 
