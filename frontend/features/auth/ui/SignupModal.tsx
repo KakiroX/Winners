@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { apiClient } from '@/shared/api/client';
 import { useAuthStore } from '../model/useAuthStore';
+import { ds } from '@/shared/lib/ds';
 
 export function SignupModal() {
   const { isSignupModalOpen, closeSignup, openLogin, setUser } = useAuthStore();
@@ -30,59 +31,97 @@ export function SignupModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative">
-        <div className="p-8 space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-slate-900">Create Account</h2>
-            <p className="text-slate-500 text-sm">Start designing your dream space</p>
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="w-full max-w-sm relative">
+        {/* Top accent line */}
+        <div className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent mb-px" />
+
+        <div className={`${ds.modal} p-8 space-y-8`}>
+          {/* Brand mark */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border border-white/30 rounded flex items-center justify-center">
+              <div className="w-3 h-3 border border-white/70 rounded-sm rotate-45" />
+            </div>
+            <div className="text-center space-y-1.5">
+              <p className={ds.label}>Inhabit</p>
+              <h2 className="text-xl font-black uppercase tracking-tight text-white leading-none">Create account</h2>
+              <p className={ds.caption}>Start designing your dream space</p>
+            </div>
           </div>
+
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
-              <input 
-                type="text" required value={name}
+            <div className="space-y-1.5">
+              <label className={ds.label}>Full name</label>
+              <input
+                type="text"
+                required
+                value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                placeholder="John Doe"
+                className={ds.input}
+                placeholder="Your name"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
-              <input 
-                type="email" required value={email}
+            <div className="space-y-1.5">
+              <label className={ds.label}>Email</label>
+              <input
+                type="email"
+                required
+                value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className={ds.input}
                 placeholder="you@example.com"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
-              <input 
-                type="password" required value={password}
+            <div className="space-y-1.5">
+              <label className={ds.label}>Password</label>
+              <input
+                type="password"
+                required
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className={ds.input}
                 placeholder="••••••••"
               />
             </div>
-            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+
+            {error && (
+              <p className="text-xs text-red-400 font-mono tracking-wide text-center py-2 px-3 bg-red-500/8 border border-red-500/15 rounded-lg">
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-60"
+              className={`w-full ${ds.btnPrimary} py-3.5 disabled:opacity-40`}
             >
               {loading ? 'Creating account…' : 'Get Started'}
             </button>
           </form>
+
+          {/* Switch */}
           <div className="text-center">
-            <button onClick={openLogin} className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
-              Already have an account? <span className="font-bold text-blue-600 underline">Sign In</span>
+            <button
+              onClick={openLogin}
+              className="text-xs font-bold tracking-widest uppercase text-white/30 hover:text-white/70 transition-colors"
+            >
+              Have an account?{' '}
+              <span className="text-white/60 underline underline-offset-4">Sign In</span>
             </button>
           </div>
         </div>
-        <button onClick={closeSignup} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+
+        {/* Bottom accent */}
+        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mt-px" />
+
+        {/* Close */}
+        <button
+          onClick={closeSignup}
+          className="absolute -top-3 -right-3 w-7 h-7 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/30 hover:text-white/70 hover:border-white/30 transition-all"
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
