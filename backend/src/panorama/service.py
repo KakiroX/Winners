@@ -47,6 +47,7 @@ class PanoramaService:
         errors: dict[str, str] = {}
 
         generator = get_panorama_generator()
+        rooms_by_id = {r.id: r for r in request.rooms}
 
         async with async_session_factory() as session:
             storage = PanoramaStorage(session)
@@ -61,6 +62,22 @@ class PanoramaService:
                 })
 
                 try:
+                    # Build connection metadata with yaw angles for door placement
+                    connections: list[dict[str, object]] = []
+                    for cid in room.connections:
+                        target = rooms_by_id.get(cid)
+                        if target is None:
+                            continue
+                        yaw = _compute_yaw(
+                            room.position, room.width_units, room.height_units,
+                            target.position, target.width_units, target.height_units,
+                        )
+                        connections.append({
+                            "target_label": target.label,
+                            "target_type": target.type,
+                            "yaw": yaw,
+                        })
+
                     prompt = build_room_prompt(
                         room_label=room.label,
                         room_type=room.type,
@@ -69,6 +86,8 @@ class PanoramaService:
                         natural_light=room.natural_light,
                         aesthetic_tags=request.aesthetic_tags,
                         style_notes=request.style_notes,
+                        connections=connections,
+                        user_style_prompt=request.user_style_prompt,
                     )
 
                     result = await asyncio.to_thread(generator.generate, prompt)

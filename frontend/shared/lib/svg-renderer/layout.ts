@@ -1,7 +1,11 @@
 import type { Room } from '@/entities/floor-plan/model/types';
 
 export const CELL_SIZE = 60;
-export const PADDING = 24;
+export const PADDING = 60; // extra padding for dimension lines
+export const WALL_THICKNESS = 6;
+export const INNER_WALL_THICKNESS = 3;
+export const WINDOW_LENGTH = 20;
+export const DOOR_RADIUS = 24;
 
 export const gridToPx = (units: number): number => units * CELL_SIZE;
 

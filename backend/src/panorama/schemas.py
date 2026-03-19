@@ -114,6 +114,7 @@ class GenerateWalkthroughRequest(BaseModel):
     rooms: list[RoomInput]
     aesthetic_tags: list[str]
     style_notes: str
+    user_style_prompt: str = ""
 
 
 class GenerateWalkthroughResponse(BaseModel):

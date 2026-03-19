@@ -1,7 +1,7 @@
 'use client';
 
 import { useSelectionStore } from '@/features/select-floor-plan';
-import { GenerateWalkthroughButton } from '@/features/generate-panorama';
+import { GenerateWalkthroughButton, StylePromptInput } from '@/features/generate-panorama';
 import { PlanViewerWidget } from '@/widgets/plan-viewer';
 
 export function PlanDetailPage() {
@@ -16,6 +16,9 @@ export function PlanDetailPage() {
   return (
     <main className="min-h-screen flex flex-col items-center py-12 px-4 gap-8">
       <PlanViewerWidget plan={selectedSchema} />
+      <div className="w-full max-w-2xl border-t border-slate-100 pt-8">
+        <StylePromptInput />
+      </div>
       <div className="flex flex-col items-center gap-3">
         <GenerateWalkthroughButton />
         <p className="text-xs text-slate-400">

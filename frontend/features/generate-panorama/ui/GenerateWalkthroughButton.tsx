@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useSelectionStore } from '@/features/select-floor-plan';
 import { usePanoramaStore } from '../model/usePanoramaStore';
+import { useStyleStore } from '../model/useStyleStore';
 import { useRouter } from 'next/navigation';
 import { env } from '@/shared/config/env';
 
 export function GenerateWalkthroughButton() {
   const { selectedSchema } = useSelectionStore();
   const { setLoading, setProgress, setSuccess, setError } = usePanoramaStore();
+  const { stylePrompt } = useStyleStore();
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
 
@@ -32,6 +34,7 @@ export function GenerateWalkthroughButton() {
           rooms: selectedSchema.rooms,
           aesthetic_tags: selectedSchema.aesthetic_tags,
           style_notes: selectedSchema.style_notes,
+          user_style_prompt: stylePrompt,
         }),
       });
 
