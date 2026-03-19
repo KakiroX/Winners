@@ -118,11 +118,13 @@ class GenerateWalkthroughRequest(BaseModel):
     """Request to generate panoramas for all rooms in a selected floor plan."""
 
     floor_plan_id: str
+    user_id: str = "guest"
     variant_label: str
     total_area_sqm: float
     grid_cols: int
     grid_rows: int
     rooms: list[RoomInput]
+    floor_plan_metadata: dict = {}  # Store the full plan layout for later viewing
     aesthetic_tags: list[str]
     style_notes: str
     user_style_prompt: str = ""

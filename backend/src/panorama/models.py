@@ -13,7 +13,9 @@ class WalkthroughModel(Base):
     __tablename__ = "walkthroughs"
 
     id: Mapped[str] = mapped_column(String(12), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String, nullable=False, index=True)
     floor_plan_id: Mapped[str] = mapped_column(String, nullable=False)
+    floor_plan_data: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     title: Mapped[str] = mapped_column(String, nullable=False, default="")
     pannellum_config: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(

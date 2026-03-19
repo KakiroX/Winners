@@ -103,7 +103,9 @@ class PanoramaService:
             # --- Phase 0: Create Walkthrough and Rooms in DB ---
             await storage.create_walkthrough(
                 walkthrough_id=generation_id,
+                user_id=request.user_id,
                 floor_plan_id=request.floor_plan_id,
+                floor_plan_data=request.floor_plan_metadata,
                 title=request.variant_label,
                 pannellum_config={"scenes": {}},  # Placeholder
                 rooms=[
@@ -362,6 +364,21 @@ class PanoramaService:
                 ),
                 updated_panorama_url=version.image_url,
             )
+
+    @staticmethod
+    async def list_walkthroughs(user_id: str) -> list[dict]:
+        """List all designs for a specific user."""
+        async with async_session_factory() as session:
+            storage = PanoramaStorage(session)
+            walkthroughs = await storage.list_walkthroughs(user_id)
+            return [
+                {
+                    "id": wt.id,
+                    "title": wt.title,
+                    "created_at": wt.created_at.isoformat(),
+                    "room_count": len(wt.rooms)
+                } for wt in walkthroughs
+            ]
 
     @staticmethod
     async def get_walkthrough_bom(walkthrough_id: str) -> dict:

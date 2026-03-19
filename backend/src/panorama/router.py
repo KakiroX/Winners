@@ -60,6 +60,14 @@ async def get_walkthrough(walkthrough_id: str) -> WalkthroughSchema:
 
 
 @router.get(
+    "/walkthroughs",
+    description="List all walkthroughs for a user.",
+)
+async def list_walkthroughs(user_id: str = "guest"):
+    return await PanoramaService.list_walkthroughs(user_id)
+
+
+@router.get(
     "/walkthrough/{walkthrough_id}/bom",
     description="Get the total Bill of Materials for a walkthrough.",
 )

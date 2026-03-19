@@ -30,32 +30,46 @@ class PanoramaStorage:
     async def create_walkthrough(
         self,
         walkthrough_id: str,
+        user_id: str,
         floor_plan_id: str,
+        floor_plan_data: dict,
         title: str,
         pannellum_config: dict,
         rooms: list[dict],
     ) -> WalkthroughModel:
-        """Create a walkthrough with its rooms in the database."""
+        """Create a new walkthrough in DB with its initial rooms."""
         wt = WalkthroughModel(
             id=walkthrough_id,
+            user_id=user_id,
             floor_plan_id=floor_plan_id,
+            floor_plan_data=floor_plan_data,
             title=title,
             pannellum_config=pannellum_config,
         )
         self.session.add(wt)
+        await self.session.flush()  # Get primary keys
 
-        for r in rooms:
+        for r_data in rooms:
             room = RoomModel(
                 walkthrough_id=walkthrough_id,
-                room_id=r["room_id"],
-                room_label=r["room_label"],
+                room_id=r_data["room_id"],
+                room_label=r_data["room_label"],
             )
             self.session.add(room)
 
         await self.session.commit()
         await self.session.refresh(wt)
-        logger.info("Created walkthrough %s with %d rooms", walkthrough_id, len(rooms))
+        logger.info("Created walkthrough %s for user %s", walkthrough_id, user_id)
         return wt
+
+    async def list_walkthroughs(self, user_id: str) -> list[WalkthroughModel]:
+        """List all walkthroughs for a specific user."""
+        result = await self.session.execute(
+            select(WalkthroughModel)
+            .where(WalkthroughModel.user_id == user_id)
+            .order_by(WalkthroughModel.created_at.desc())
+        )
+        return list(result.scalars().all())
 
     async def get_walkthrough(self, walkthrough_id: str) -> WalkthroughModel | None:
         """Load a walkthrough with its rooms and versions."""
@@ -158,9 +172,7 @@ class PanoramaStorage:
 
     async def revert_room_version(self, walkthrough_id: str, room_id: str, version_id: str) -> str:
         """Revert a room to a previous version ID. Returns the new current image URL."""
-        from sqlalchemy import update
-        
-        # 1. Verify the version exists and belongs to the room
+        # 1. Verify the room exists
         result = await self.session.execute(
             select(RoomModel).where(
                 RoomModel.walkthrough_id == walkthrough_id,

@@ -6,15 +6,17 @@ import type { FloorPlanSchema } from '@/entities/floor-plan/model/types';
 
 interface GeneratePayload {
   floorPlan: FloorPlanSchema;
+  userId: string;
 }
 
 const generateWalkthrough = async (
   payload: GeneratePayload,
 ): Promise<GenerateWalkthroughResponse> => {
-  const { floorPlan } = payload;
+  const { floorPlan, userId } = payload;
 
   const { data } = await apiClient.post('/panorama/generate-walkthrough', {
     floor_plan_id: floorPlan.id,
+    user_id: userId,
     variant_label: floorPlan.variant_label,
     total_area_sqm: floorPlan.total_area_sqm,
     grid_cols: floorPlan.grid_cols,

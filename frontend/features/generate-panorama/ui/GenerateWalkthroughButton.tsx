@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSelectionStore } from '@/features/select-floor-plan';
 import { usePanoramaStore } from '../model/usePanoramaStore';
 import { useStyleStore } from '../model/useStyleStore';
+import { useAuthStore } from '@/features/auth';
 import { useRouter } from 'next/navigation';
 import { env } from '@/shared/config/env';
 
@@ -11,12 +12,14 @@ export function GenerateWalkthroughButton() {
   const { selectedSchema } = useSelectionStore();
   const { setLoading, setProgress, setSuccess, setError } = usePanoramaStore();
   const { stylePrompt } = useStyleStore();
+  const { user } = useAuthStore();
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
 
   const handleClick = async () => {
     if (!selectedSchema) return;
 
+    const userId = user?.id || "guest";
     setIsPending(true);
     setLoading(selectedSchema.rooms.length);
     router.push('/walkthrough/generating');
@@ -27,11 +30,13 @@ export function GenerateWalkthroughButton() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           floor_plan_id: selectedSchema.id,
+          user_id: userId,
           variant_label: selectedSchema.variant_label,
           total_area_sqm: selectedSchema.total_area_sqm,
           grid_cols: selectedSchema.grid_cols,
           grid_rows: selectedSchema.grid_rows,
           rooms: selectedSchema.rooms,
+          floor_plan_metadata: selectedSchema,
           aesthetic_tags: selectedSchema.aesthetic_tags,
           style_notes: selectedSchema.style_notes,
           user_style_prompt: stylePrompt,

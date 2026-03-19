@@ -17,7 +17,7 @@ export function Header() {
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm font-bold text-slate-500 uppercase tracking-wider">
            <Link href="/" className="hover:text-slate-900 transition-colors">Home</Link>
-           <Link href="/plan" className="hover:text-slate-900 transition-colors">Interior Design</Link>
+           <Link href="/designs" className="hover:text-slate-900 transition-colors">Designs</Link>
            <Link href="/walkthrough" className="hover:text-slate-900 transition-colors">360° Studio</Link>
         </nav>
         <div className="flex items-center gap-3">
