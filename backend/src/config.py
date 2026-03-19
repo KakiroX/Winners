@@ -1,8 +1,15 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_ROOT_ENV = Path(__file__).parent.parent.parent / ".env"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=(_ROOT_ENV, ".env"),
+        env_file_encoding="utf-8",
+    )
 
     google_api_key: str
     gemini_model: str = "gemini-flash-3.1-preview"
