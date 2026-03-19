@@ -12,8 +12,9 @@ interface Props {
 export function WalkthroughPage({ walkthroughId }: Props) {
   const { status, walkthrough, errorMessage, setSuccess } = usePanoramaStore();
 
-  // Fetch from API when store is empty and we have an ID (page reload case)
-  const needsFetch = !walkthrough && status === 'idle' && !!walkthroughId;
+  // Fetch when: no walkthrough in store, OR the stored walkthrough is for a different project
+  const storeMatchesUrl = walkthrough?.id === walkthroughId;
+  const needsFetch = !!walkthroughId && (status === 'idle' || !storeMatchesUrl);
   const query = useWalkthrough(needsFetch ? walkthroughId : null);
 
   // Hydrate the store from the API response
@@ -32,8 +33,8 @@ export function WalkthroughPage({ walkthroughId }: Props) {
     );
   }
 
-  // Fetching from API on page reload
-  if (query.isLoading && needsFetch) {
+  // Fetching from API (page reload or navigating to a different project)
+  if (query.isLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
         <p className="text-slate-400 text-sm">Loading walkthrough...</p>
@@ -55,8 +56,8 @@ export function WalkthroughPage({ walkthroughId }: Props) {
     );
   }
 
-  // Use store walkthrough first, fall back to query data
-  const wt = walkthrough ?? query.data;
+  // Use store only if it matches the current URL; otherwise use fresh query data
+  const wt = storeMatchesUrl ? walkthrough : query.data;
 
   if (!wt) {
     return (

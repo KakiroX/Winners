@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import type { Walkthrough } from '@/entities/panorama/model/types';
 import { PannellumViewer, useViewerStore } from '@/features/panorama-viewer';
-import { useEditStore } from '@/features/edit-panorama';
-import { EditPanel } from '@/features/edit-panorama';
+import { useEditStore, EditPanel, VersionsModal } from '@/features/edit-panorama';
 import { BOMModal } from '@/features/bom';
-import { VersionsModal } from '@/features/edit-panorama';
-import { useState } from 'react';
+import { ds } from '@/shared/lib/ds';
 
 interface Props {
   walkthrough: Walkthrough;
@@ -18,6 +17,7 @@ export function WalkthroughViewerWidget({ walkthrough }: Props) {
   const { setSelectedPoint } = useEditStore();
   const [isBOMOpen, setIsBOMOpen] = useState(false);
   const [isVersionsOpen, setIsVersionsOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const currentRoom = walkthrough.rooms.find((r) => r.room_id === currentSceneId);
 
@@ -26,54 +26,93 @@ export function WalkthroughViewerWidget({ walkthrough }: Props) {
   };
 
   return (
-    <div className="relative w-full h-full font-sans text-slate-900">
-      {/* Room navigation sidebar */}
-      <div className="absolute top-6 left-6 z-50 w-64 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex flex-col transition-all duration-300">
-        <div className="px-5 py-4 text-sm font-bold text-slate-900 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            Rooms
-          </div>
-          <Link href="/" className="text-[10px] uppercase font-black bg-slate-100 px-2 py-1 rounded hover:bg-slate-900 hover:text-white transition-all">
-            Home
-          </Link>
-        </div>
-        <div className="py-2 overflow-y-auto max-h-[50vh]">
-          {walkthrough.rooms.map((room) => (
+    <div className="relative w-full h-full">
+      {/* Sidebar */}
+      <div className={`absolute top-0 left-0 bottom-0 z-50 flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-12'}`}>
+        <div className="flex-1 bg-black/70 backdrop-blur-xl border-r border-white/8 flex flex-col overflow-hidden">
+          {/* Sidebar header */}
+          <div className="flex items-center justify-between px-4 py-4 border-b border-white/8">
+            {sidebarOpen && (
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse" />
+                <span className="text-white/60 text-xs font-bold tracking-widest uppercase">Rooms</span>
+              </div>
+            )}
             <button
-              key={room.room_id}
-              onClick={() => loadScene(room.room_id)}
-              className={`w-full text-left px-5 py-3 text-sm font-medium transition-all duration-200 flex items-center justify-between group ${
-                room.room_id === currentSceneId
-                  ? 'bg-slate-100 text-blue-600 border-l-4 border-blue-600'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-l-4 border-transparent'
-              }`}
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className={`${ds.iconBtn} shrink-0`}
+              title={sidebarOpen ? 'Collapse' : 'Expand'}
             >
-              <span>{room.room_label}</span>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarOpen ? 'M15 19l-7-7 7-7' : 'M9 5l7 7-7 7'} />
+              </svg>
             </button>
-          ))}
-        </div>
-        
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col gap-2 text-[10px]">
-           <button 
-             onClick={() => setIsBOMOpen(true)}
-             className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest"
-           >
-             Project BOM
-           </button>
-           <button 
-             onClick={() => setIsVersionsOpen(true)}
-             className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest"
-           >
-             Room History
-           </button>
+          </div>
+
+          {/* Room list */}
+          {sidebarOpen && (
+            <div className="flex-1 overflow-y-auto py-2">
+              {walkthrough.rooms.map((room) => {
+                const active = room.room_id === currentSceneId;
+                return (
+                  <button
+                    key={room.room_id}
+                    onClick={() => loadScene(room.room_id)}
+                    className={`w-full text-left px-4 py-3 text-xs font-medium transition-all flex items-center gap-3 ${
+                      active
+                        ? 'text-white bg-white/10 border-l-2 border-white/50'
+                        : 'text-white/40 hover:text-white/70 hover:bg-white/5 border-l-2 border-transparent'
+                    }`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? 'bg-white/70' : 'bg-white/15'}`} />
+                    <span className="uppercase tracking-widest truncate">{room.room_label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Actions */}
+          {sidebarOpen && (
+            <div className="p-3 border-t border-white/8 space-y-2">
+              <button
+                onClick={() => setIsBOMOpen(true)}
+                className={`${ds.btnGhost} w-full flex items-center justify-center gap-2`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Project BOM
+              </button>
+              <button
+                onClick={() => setIsVersionsOpen(true)}
+                className={`${ds.btnGhost} w-full flex items-center justify-center gap-2`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Room History
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Current room indicator */}
+      {/* Top bar — room label + home */}
       {currentRoom && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-white/90 backdrop-blur-md px-6 py-2.5 rounded-full text-slate-900 text-xs font-bold shadow-lg border border-slate-200">
-           {currentRoom.room_label}
+        <div className="absolute top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3">
+          <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-5 py-2">
+            <span className="text-white/70 text-xs font-bold tracking-widest uppercase">{currentRoom.room_label}</span>
+          </div>
+          <Link
+            href="/designs"
+            className="bg-black/60 backdrop-blur-md border border-white/10 rounded-full p-2 text-white/40 hover:text-white/70 transition-colors"
+            title="Back to Designs"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </Link>
         </div>
       )}
 
@@ -87,10 +126,8 @@ export function WalkthroughViewerWidget({ walkthrough }: Props) {
       {/* Edit panel */}
       {currentSceneId && <EditPanel walkthroughId={walkthrough.id} roomId={currentSceneId} />}
 
-      {/* BOM Modal */}
+      {/* Modals */}
       {isBOMOpen && <BOMModal walkthroughId={walkthrough.id} onClose={() => setIsBOMOpen(false)} />}
-
-      {/* Versions Modal */}
       {isVersionsOpen && currentSceneId && (
         <VersionsModal walkthroughId={walkthrough.id} roomId={currentSceneId} onClose={() => setIsVersionsOpen(false)} />
       )}

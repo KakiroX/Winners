@@ -6,6 +6,7 @@ import { usePanoramaStore } from '../model/usePanoramaStore';
 import { useStyleStore } from '../model/useStyleStore';
 import { useAuthStore } from '@/features/auth';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { env } from '@/shared/config/env';
 
 export function GenerateWalkthroughButton() {
@@ -14,6 +15,7 @@ export function GenerateWalkthroughButton() {
   const { stylePrompt } = useStyleStore();
   const { user } = useAuthStore();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isPending, setIsPending] = useState(false);
 
   const handleClick = async () => {
@@ -91,6 +93,7 @@ export function GenerateWalkthroughButton() {
             });
           } else if (eventType === 'complete') {
             setSuccess(parsed.walkthrough);
+            queryClient.invalidateQueries({ queryKey: ['walkthroughs'] });
             router.replace(`/walkthrough/${parsed.walkthrough.id}`);
             return;
           } else if (eventType === 'error') {

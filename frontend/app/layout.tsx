@@ -23,7 +23,7 @@ export default function RootLayout({
       <head>
         <link rel="stylesheet" href="/pannellum/pannellum.css" />
       </head>
-      <body className="min-h-full bg-white text-slate-900">
+      <body className="min-h-full bg-black text-white">
         <Providers>
           <LayoutContent>
             {children}
