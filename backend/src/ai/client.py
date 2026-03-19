@@ -13,3 +13,13 @@ def get_gemini_client() -> ChatGoogleGenerativeAI:
         temperature=settings.gemini_temperature,
         max_retries=settings.gemini_max_retries,
     )
+
+
+@lru_cache(maxsize=1)
+def get_gemini_image_client() -> ChatGoogleGenerativeAI:
+    return ChatGoogleGenerativeAI(
+        model=settings.gemini_image_model,
+        google_api_key=settings.google_api_key,
+        temperature=settings.gemini_temperature,
+        max_retries=settings.gemini_max_retries,
+    )
