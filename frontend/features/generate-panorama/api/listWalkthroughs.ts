@@ -8,6 +8,8 @@ export interface WalkthroughSummary {
   title: string;
   created_at: string;
   room_count: number;
+  floor_plan_metadata?: any;
+  bom?: any[];
 }
 
 export function useWalkthroughs(userId: string = "guest") {

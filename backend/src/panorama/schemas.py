@@ -149,3 +149,9 @@ class EditRoomResponse(BaseModel):
 
     version: VersionSchema
     updated_panorama_url: str
+
+
+class RenameWalkthroughRequest(BaseModel):
+    """Request to rename a walkthrough."""
+
+    title: str = Field(min_length=1, max_length=100)
