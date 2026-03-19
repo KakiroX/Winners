@@ -7,4 +7,4 @@ On-demand web-service for generative interior design and viewing, making batch g
 -  generative room design
 -  immersive room Walkthrough®
 -  batch generation of designs
--  ordering of the 
+-  ordering of the furniture items based on the design
