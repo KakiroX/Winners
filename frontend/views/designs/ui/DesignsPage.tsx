@@ -1,138 +1,239 @@
 'use client';
 
+import { useRef, useState } from 'react';
+import Link from 'next/link';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 import { useAuthStore } from '@/features/auth';
 import { useWalkthroughs } from '@/features/generate-panorama/api/listWalkthroughs';
 import { PlanViewerWidget } from '@/widgets/plan-viewer';
-import Link from 'next/link';
-import { useState } from 'react';
+import { ds } from '@/shared/lib/ds';
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export function DesignsPage() {
   const { user } = useAuthStore();
-  const userId = user?.id || "guest";
+  const userId = user?.id ?? 'guest';
   const { data: walkthroughs, isLoading } = useWalkthroughs(userId);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      gsap.from('.page-header', {
+        opacity: 0, y: 20, duration: 0.6, ease: 'power3.out',
+      });
+
+      gsap.from('.design-card', {
+        opacity: 0, y: 28, stagger: 0.1, duration: 0.55, ease: 'power3.out', delay: 0.15,
+      });
+    },
+    { scope: containerRef, dependencies: [isLoading] },
+  );
 
   return (
-    <main className="min-h-screen pt-32 pb-20 bg-slate-50">
-      <div className="max-w-7xl mx-auto px-6 space-y-12">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Your Designs</h1>
-          <p className="text-slate-500 font-medium">Manage and explore your generated spaces.</p>
+    <div ref={containerRef} className={`${ds.page} pt-16`}>
+      <div className={`${ds.container} py-16 space-y-12`}>
+
+        {/* Header row */}
+        <div className="page-header flex items-end justify-between border-b border-white/8 pb-10">
+          <div className="space-y-2">
+            <p className={ds.label}>Your workspace</p>
+            <h1 className={`${ds.h1} text-[clamp(2.5rem,5vw,4rem)]`}>Designs</h1>
+          </div>
+          <Link href="/generate" className={ds.btnPrimary}>
+            + New Design
+          </Link>
         </div>
 
+        {/* States */}
         {isLoading ? (
-          <div className="grid md:grid-cols-3 gap-8">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-64 bg-white rounded-3xl animate-pulse border border-slate-200" />
-            ))}
-          </div>
+          <SkeletonGrid />
         ) : !walkthroughs || walkthroughs.length === 0 ? (
-          <div className="bg-white rounded-[40px] p-20 text-center border border-slate-100 shadow-sm space-y-6">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
-               <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-            </div>
-            <div className="space-y-2">
-               <h3 className="text-xl font-bold text-slate-900">No designs found</h3>
-               <p className="text-slate-500 text-sm max-w-xs mx-auto">Start by creating a new interior design from the home page.</p>
-            </div>
-            <Link href="/" className="inline-block px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-xl">
-               Create New Design
-            </Link>
-          </div>
+          <EmptyState />
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {walkthroughs.map((wt: any) => (
-              <div key={wt.id} className="group bg-white rounded-[32px] border border-slate-200 p-8 hover:shadow-2xl hover:shadow-slate-200 transition-all duration-500 flex flex-col justify-between h-full text-slate-900">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                     <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-1 rounded-full">360 Walkthrough</span>
-                     <span className="text-[10px] font-bold text-slate-400">{new Date(wt.created_at).toLocaleDateString()}</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{wt.title}</h3>
-                  <div className="flex items-center gap-4 text-sm text-slate-500 font-medium">
-                     <div className="flex items-center gap-1.5">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                        {wt.room_count} Rooms
-                     </div>
-                  </div>
-                </div>
-
-                <div className="pt-8 flex flex-col gap-3">
-                   <Link 
-                     href={`/walkthrough/${wt.id}`}
-                     className="w-full flex items-center justify-center gap-2 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-blue-600 transition-all duration-300 shadow-lg shadow-slate-200"
-                   >
-                     Go to 3D View
-                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                   </Link>
-                   
-                   {wt.floor_plan_metadata && (
-                     <button 
-                       onClick={() => setSelectedPlan(wt.floor_plan_metadata)}
-                       className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-slate-900 text-slate-900 rounded-2xl font-bold hover:bg-slate-50 transition-all duration-300"
-                     >
-                       Show Floor Plan
-                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A2 2 0 013 15.487V6a2 2 0 011.106-1.789l5.447-2.724a2 2 0 011.894 0l5.447 2.724A2 2 0 0118 6v9.487a2 2 0 01-1.106 1.789L11.447 20a2 2 0 01-1.894 0z" /></svg>
-                     </button>
-                   )}
-                </div>
-              </div>
+              <DesignCard
+                key={wt.id}
+                wt={wt}
+                onShowPlan={() => setSelectedPlan(wt.floor_plan_metadata)}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {/* Floor Plan Modal */}
+      {/* Footer */}
+      <footer className="border-t border-white/8 py-8 px-10 flex items-center justify-between text-white/20 text-xs font-bold uppercase tracking-widest">
+        <span>&copy; 2026 Inhabit AI</span>
+        <Link href="/generate" className="hover:text-white/50 transition-colors">Generate →</Link>
+      </footer>
+
+      {/* Floor plan modal */}
       {selectedPlan && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 text-slate-900">
-           <div className="w-full max-w-4xl bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-              <div className="px-10 py-8 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                 <div>
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Floor Plan Layout</h2>
-                    <p className="text-sm text-slate-500 font-medium">{selectedPlan.variant_label}</p>
-                 </div>
-                 <button 
-                   onClick={() => setSelectedPlan(null)}
-                   className="p-3 hover:bg-slate-200 rounded-full transition-colors text-slate-400"
-                 >
-                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                 </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-10 flex flex-col items-center gap-10">
-                 <PlanViewerWidget plan={selectedPlan} />
-                 
-                 <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Area</p>
-                       <p className="text-xl font-black text-slate-900">{selectedPlan.total_area_sqm} m²</p>
-                    </div>
-                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Rooms</p>
-                       <p className="text-xl font-black text-slate-900">{selectedPlan.rooms.length}</p>
-                    </div>
-                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Grid Size</p>
-                       <p className="text-xl font-black text-slate-900">{selectedPlan.grid_cols}x{selectedPlan.grid_rows}</p>
-                    </div>
-                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Style</p>
-                       <p className="text-lg font-black text-slate-900 truncate" title={selectedPlan.aesthetic_tags.join(', ')}>
-                          {selectedPlan.aesthetic_tags[0] || 'Modern'}
-                       </p>
-                    </div>
-                 </div>
-              </div>
-              <div className="px-10 py-8 bg-slate-50 border-t border-slate-100 flex justify-end">
-                 <button 
-                   onClick={() => setSelectedPlan(null)}
-                   className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200"
-                 >
-                   Close Plan
-                 </button>
-              </div>
-           </div>
-        </div>
+        <FloorPlanModal plan={selectedPlan} onClose={() => setSelectedPlan(null)} />
       )}
-    </main>
+    </div>
+  );
+}
+
+// ── Sub-components ──────────────────────────────────────────────
+
+function SkeletonGrid() {
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className={`${ds.card} p-7 space-y-4 h-64`}>
+          <div className={`${ds.skeleton} h-3 w-16 rounded-full`} />
+          <div className={`${ds.skeleton} h-6 w-3/4`} />
+          <div className={`${ds.skeleton} h-4 w-1/2`} />
+          <div className="pt-6 space-y-2">
+            <div className={`${ds.skeleton} h-10 w-full`} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className={`${ds.card} p-20 text-center space-y-8 max-w-lg mx-auto`}>
+      {/* Icon */}
+      <div className="w-16 h-16 border border-white/12 rounded-2xl flex items-center justify-center mx-auto">
+        <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A2 2 0 013 15.487V6a2 2 0 011.106-1.789l5.447-2.724a2 2 0 011.894 0l5.447 2.724A2 2 0 0118 6v9.487a2 2 0 01-1.106 1.789L11.447 20a2 2 0 01-1.894 0z" />
+        </svg>
+      </div>
+      <div className="space-y-2">
+        <h3 className={`${ds.h3} text-xl`}>No designs yet</h3>
+        <p className={`${ds.body} text-sm max-w-xs mx-auto`}>
+          Start by generating a floor plan from a text description.
+        </p>
+      </div>
+      <Link href="/generate" className={ds.btnPrimary}>
+        Create First Design
+      </Link>
+    </div>
+  );
+}
+
+function DesignCard({ wt, onShowPlan }: { wt: any; onShowPlan: () => void }) {
+  return (
+    <div className={`design-card ${ds.card} ${ds.cardHover} p-7 flex flex-col justify-between h-full group`}>
+      <div className="space-y-4">
+        {/* Meta row */}
+        <div className="flex items-center justify-between">
+          <span className={ds.tag}>360 Walkthrough</span>
+          <span className={ds.caption}>
+            {new Date(wt.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-white/85 text-xl font-bold leading-snug group-hover:text-white transition-colors">
+          {wt.title}
+        </h3>
+
+        {/* Stats */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 text-white/30 text-xs font-medium">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
+            </svg>
+            {wt.room_count} rooms
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="pt-7 flex flex-col gap-2.5">
+        <Link
+          href={`/walkthrough/${wt.id}`}
+          className={`${ds.btnPrimary} w-full text-center flex items-center justify-center gap-2`}
+        >
+          Open 360° View
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </Link>
+
+        {wt.floor_plan_metadata && (
+          <button onClick={onShowPlan} className={`${ds.btnGhost} w-full flex items-center justify-center gap-2`}>
+            Floor Plan
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A2 2 0 013 15.487V6a2 2 0 011.106-1.789l5.447-2.724a2 2 0 011.894 0l5.447 2.724A2 2 0 0118 6v9.487a2 2 0 01-1.106 1.789L11.447 20a2 2 0 01-1.894 0z" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FloorPlanModal({ plan, onClose }: { plan: any; onClose: () => void }) {
+  const stats = [
+    { label: 'Total Area', value: `${plan.total_area_sqm} m²` },
+    { label: 'Rooms', value: plan.rooms.length },
+    { label: 'Grid', value: `${plan.grid_cols}×${plan.grid_rows}` },
+    { label: 'Style', value: plan.aesthetic_tags?.[0] ?? 'Modern' },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/75 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className={`${ds.modal} w-full max-w-4xl flex flex-col max-h-[88vh] overflow-hidden`}>
+        {/* Modal header */}
+        <div className="px-8 py-6 border-b border-white/8 flex items-center justify-between">
+          <div className="space-y-1">
+            <p className={ds.label}>Floor Plan</p>
+            <h2 className={`${ds.h2} text-2xl`}>{plan.variant_label}</h2>
+          </div>
+          <button onClick={onClose} className={ds.iconBtn}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Modal body */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          <PlanViewerWidget plan={plan} />
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {stats.map(({ label, value }) => (
+              <div key={label} className={`${ds.card} p-5 space-y-1`}>
+                <p className={ds.label}>{label}</p>
+                <p className="text-white font-black text-lg">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Style tags */}
+          {plan.aesthetic_tags?.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {plan.aesthetic_tags.map((tag: string) => (
+                <span key={tag} className={ds.tag}>{tag}</span>
+              ))}
+            </div>
+          )}
+
+          {/* Style notes */}
+          {plan.style_notes && (
+            <p className={`${ds.body} border-l-2 border-white/15 pl-4`}>{plan.style_notes}</p>
+          )}
+        </div>
+
+        {/* Modal footer */}
+        <div className="px-8 py-5 border-t border-white/8 flex justify-end">
+          <button onClick={onClose} className={ds.btnGhost}>Close</button>
+        </div>
+      </div>
+    </div>
   );
 }
