@@ -25,11 +25,12 @@ export function PlanGridWidget({ schemas, interpretation }: Props) {
           />
         ))}
       </div>
-      {selectedId && (
-        <div className="flex justify-center pt-4">
-          <GenerateWalkthroughButton />
-        </div>
-      )}
+      <div className="flex flex-col items-center gap-2 pt-4">
+        <GenerateWalkthroughButton />
+        {!selectedId && (
+          <p className="text-xs text-slate-400">Select a layout above to continue</p>
+        )}
+      </div>
     </div>
   );
 }

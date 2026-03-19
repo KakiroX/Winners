@@ -15,9 +15,15 @@ interface Props {
 export function PannellumViewer({ config, className = '', onPanoramaClick, onSceneChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<PannellumViewerInstance | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const { setCurrentScene, setView } = useViewerStore();
 
-  const handleMouseDown = useCallback(
+  // Track drag start to distinguish clicks from drags
+  const handleMouseDown = useCallback((event: MouseEvent) => {
+    dragStartRef.current = { x: event.clientX, y: event.clientY };
+  }, []);
+
+  const handleMouseUp = useCallback(
     (event: MouseEvent) => {
       if (!viewerRef.current || !onPanoramaClick) return;
 
@@ -25,9 +31,20 @@ export function PannellumViewer({ config, className = '', onPanoramaClick, onSce
       const target = event.target as HTMLElement;
       if (target.closest('.pnlm-hotspot')) return;
 
-      const coords = viewerRef.current.mouseEventToCoords(event);
-      if (coords) {
-        onPanoramaClick(coords[0], coords[1], event.clientX, event.clientY);
+      // Ignore drags (moved more than 5px)
+      if (dragStartRef.current) {
+        const dx = event.clientX - dragStartRef.current.x;
+        const dy = event.clientY - dragStartRef.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) > 5) return;
+      }
+
+      try {
+        const coords = viewerRef.current.mouseEventToCoords(event);
+        if (coords) {
+          onPanoramaClick(coords[0], coords[1], event.clientX, event.clientY);
+        }
+      } catch {
+        // Pannellum renderer not ready yet — ignore
       }
     },
     [onPanoramaClick],
@@ -56,13 +73,6 @@ export function PannellumViewer({ config, className = '', onPanoramaClick, onSce
       onSceneChange?.(id);
     });
 
-    // Track view changes
-    viewer.on('mouseup', () => {
-      if (viewerRef.current) {
-        setView(viewerRef.current.getPitch(), viewerRef.current.getYaw());
-      }
-    });
-
     // Set initial scene
     if (config.default.firstScene) {
       setCurrentScene(config.default.firstScene);
@@ -77,14 +87,18 @@ export function PannellumViewer({ config, className = '', onPanoramaClick, onSce
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config]);
 
-  // Attach click handler
+  // Attach click handlers — mousedown for drag tracking, mouseup for actual clicks
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     container.addEventListener('mousedown', handleMouseDown);
-    return () => container.removeEventListener('mousedown', handleMouseDown);
-  }, [handleMouseDown]);
+    container.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      container.removeEventListener('mousedown', handleMouseDown);
+      container.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseDown, handleMouseUp]);
 
   return <div ref={containerRef} id="panorama" className={className} />;
 }

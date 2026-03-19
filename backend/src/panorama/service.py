@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import math
 import time
 import uuid
+from collections.abc import AsyncGenerator
 from pathlib import Path
 
 from src.ai.panorama_client import get_panorama_generator
-from src.ai.panorama_graph import build_panorama_graph
-from src.ai.panorama_prompts import build_edit_prompt
-from src.ai.panorama_state import PanoramaGraphState
+from src.ai.panorama_prompts import build_edit_prompt, build_room_prompt
+from src.panorama.constants import STORAGE_BASE_DIR
 from src.panorama.exceptions import (
     PanoramaGenerationError,
     RoomNotFoundError,
@@ -21,6 +23,8 @@ from src.panorama.schemas import (
     EditRoomResponse,
     GenerateWalkthroughRequest,
     GenerateWalkthroughResponse,
+    NavigationHotspot,
+    RoomPanorama,
     VersionSchema,
     WalkthroughSchema,
 )
@@ -40,31 +44,141 @@ class PanoramaService:
     """Stateless service for panorama generation and editing."""
 
     @staticmethod
-    async def generate_walkthrough(
+    async def generate_walkthrough_stream(
         request: GenerateWalkthroughRequest,
-    ) -> GenerateWalkthroughResponse:
-        """Generate 360 panoramas for all rooms in a floor plan and link them."""
+    ) -> AsyncGenerator[str, None]:
+        """Generate panoramas room-by-room, yielding SSE progress events."""
         generation_id = uuid.uuid4().hex[:12]
+        total_rooms = len(request.rooms)
+        generated: dict[str, str] = {}  # room_id -> image path
+        errors: dict[str, str] = {}
 
-        graph = build_panorama_graph()
-        initial_state = PanoramaGraphState(
-            generation_id=generation_id,
-            floor_plan_id=request.floor_plan_id,
-            rooms=request.rooms,
-            aesthetic_tags=request.aesthetic_tags,
-            style_notes=request.style_notes,
-            variant_label=request.variant_label,
-        )
+        # Create storage directory
+        design_dir = STORAGE_BASE_DIR / generation_id / "rooms"
+        design_dir.mkdir(parents=True, exist_ok=True)
 
-        final_state = await graph.ainvoke(initial_state)
+        generator = get_panorama_generator()
 
-        room_panoramas = final_state.get("room_panoramas", [])
-        if not room_panoramas:
-            raise PanoramaGenerationError("No panoramas were generated successfully.")
+        # --- Phase 1: Generate each room panorama ---
+        for i, room in enumerate(request.rooms):
+            # Emit progress event
+            yield _sse_event("progress", {
+                "phase": "generating",
+                "current": i,
+                "total": total_rooms,
+                "room_label": room.label,
+            })
 
-        pannellum_config = final_state.get("pannellum_config", {})
+            try:
+                prompt = build_room_prompt(
+                    room_label=room.label,
+                    room_type=room.type,
+                    area_sqm=room.area_sqm,
+                    features=room.features,
+                    natural_light=room.natural_light,
+                    aesthetic_tags=request.aesthetic_tags,
+                    style_notes=request.style_notes,
+                )
 
-        # Persist walkthrough metadata
+                result = await asyncio.to_thread(generator.generate, prompt)
+                image_path = design_dir / f"{room.id}.jpg"
+                result.save(str(image_path))
+                generated[room.id] = str(image_path)
+
+                yield _sse_event("room_done", {
+                    "current": i + 1,
+                    "total": total_rooms,
+                    "room_label": room.label,
+                    "room_id": room.id,
+                })
+
+            except Exception as e:
+                logger.error("Failed to generate room %s: %s", room.id, str(e))
+                errors[room.id] = str(e)
+                yield _sse_event("room_error", {
+                    "current": i + 1,
+                    "total": total_rooms,
+                    "room_label": room.label,
+                    "error": str(e),
+                })
+
+        if not generated:
+            yield _sse_event("error", {"message": "Failed to generate any panoramas"})
+            return
+
+        # --- Phase 2: Link rooms ---
+        yield _sse_event("progress", {
+            "phase": "linking",
+            "current": total_rooms,
+            "total": total_rooms,
+            "room_label": "Linking rooms...",
+        })
+
+        rooms_by_id = {r.id: r for r in request.rooms}
+        room_panoramas: list[RoomPanorama] = []
+        scenes: dict[str, object] = {}
+
+        for room in request.rooms:
+            if room.id not in generated:
+                continue
+
+            nav_hotspots: list[NavigationHotspot] = []
+            for connected_id in room.connections:
+                if connected_id not in generated or connected_id not in rooms_by_id:
+                    continue
+                target = rooms_by_id[connected_id]
+                yaw = _compute_yaw(
+                    room.position, room.width_units, room.height_units,
+                    target.position, target.width_units, target.height_units,
+                )
+                nav_hotspots.append(NavigationHotspot(
+                    id=uuid.uuid4().hex[:8],
+                    target_room_id=connected_id,
+                    pitch=0.0,
+                    yaw=yaw,
+                    label=f"Go to {target.label}",
+                ))
+
+            panorama_url = f"/panoramas/{generation_id}/rooms/{room.id}.jpg"
+            rp = RoomPanorama(
+                room_id=room.id,
+                room_label=room.label,
+                room_type=room.type,
+                panorama_url=panorama_url,
+                navigation_hotspots=nav_hotspots,
+            )
+            room_panoramas.append(rp)
+
+            scenes[room.id] = {
+                "title": room.label,
+                "type": "equirectangular",
+                "panorama": panorama_url,
+                "hfov": 110,
+                "yaw": 0,
+                "pitch": 0,
+                "hotSpots": [
+                    {"id": hs.id, "pitch": hs.pitch, "yaw": hs.yaw,
+                     "type": "scene", "text": hs.label, "sceneId": hs.target_room_id}
+                    for hs in nav_hotspots
+                ],
+            }
+
+        first_room_id = room_panoramas[0].room_id if room_panoramas else ""
+        pannellum_config: dict[str, object] = {
+            "default": {
+                "firstScene": first_room_id,
+                "autoLoad": True,
+                "autoRotate": -2,
+                "compass": True,
+                "showZoomCtrl": True,
+                "showFullscreenCtrl": True,
+                "mouseZoom": True,
+                "draggable": True,
+            },
+            "scenes": scenes,
+        }
+
+        # --- Phase 3: Save ---
         walkthrough_data = WalkthroughData(
             id=generation_id,
             floor_plan_id=request.floor_plan_id,
@@ -87,7 +201,22 @@ class PanoramaService:
             pannellum_config=pannellum_config,
         )
 
-        return GenerateWalkthroughResponse(walkthrough=walkthrough)
+        response = GenerateWalkthroughResponse(walkthrough=walkthrough)
+        yield _sse_event("complete", response.model_dump())
+
+    @staticmethod
+    async def generate_walkthrough(
+        request: GenerateWalkthroughRequest,
+    ) -> GenerateWalkthroughResponse:
+        """Non-streaming fallback — collects the full result."""
+        result = None
+        async for event_str in PanoramaService.generate_walkthrough_stream(request):
+            if event_str.startswith("event: complete"):
+                data_line = event_str.split("\ndata: ", 1)[1].split("\n")[0]
+                result = GenerateWalkthroughResponse.model_validate_json(data_line)
+        if result is None:
+            raise PanoramaGenerationError("Generation stream ended without result.")
+        return result
 
     @staticmethod
     async def edit_room(
@@ -100,52 +229,34 @@ class PanoramaService:
         """Surgically edit a room panorama at a specific location."""
         walkthrough = _storage.get_walkthrough(walkthrough_id)
         if walkthrough is None:
-            raise WalkthroughNotFoundError(
-                f"Walkthrough {walkthrough_id} not found"
-            )
+            raise WalkthroughNotFoundError(f"Walkthrough {walkthrough_id} not found")
 
         image_path = _storage.get_room_image_path(walkthrough_id, room_id)
         if image_path is None or not image_path.exists():
-            raise RoomNotFoundError(
-                f"Room {room_id} not found in walkthrough {walkthrough_id}"
-            )
+            raise RoomNotFoundError(f"Room {room_id} not found in walkthrough {walkthrough_id}")
 
-        # Build edit prompt
-        edit_prompt_text = build_edit_prompt(
-            modification=prompt,
-            pitch=pitch,
-            yaw=yaw,
-        )
+        edit_prompt_text = build_edit_prompt(modification=prompt, pitch=pitch, yaw=yaw)
 
-        # Run Gemini edit in thread pool
         from PIL import Image
 
         generator = get_panorama_generator()
         panorama = Image.open(image_path)
 
         result = await asyncio.to_thread(
-            generator.edit,
-            panorama,
-            prompt,
-            edit_prompt_text,
-            pitch,
-            yaw,
+            generator.edit, panorama, prompt, edit_prompt_text, pitch, yaw,
         )
 
-        # Save as temp then version it
         temp_path = image_path.parent / f"temp_edit_{uuid.uuid4().hex[:6]}.jpg"
         result.save(str(temp_path))
 
         try:
             hotspot = EditHotspotData(
                 id=uuid.uuid4().hex[:8],
-                pitch=pitch,
-                yaw=yaw,
+                pitch=pitch, yaw=yaw,
                 text=prompt[:50],
                 properties={"prompt": prompt},
             )
 
-            # Merge with existing hotspots from current version
             existing_hotspots: list[EditHotspotData] = []
             for r in walkthrough.rooms:
                 if r.room_id == room_id and r.current_version_id:
@@ -165,7 +276,6 @@ class PanoramaService:
                 hotspots=all_hotspots,
             )
 
-            # Update panorama URL in Pannellum config
             new_url = f"/panoramas/{version_data.image_path}"
             _update_pannellum_scene(walkthrough_id, room_id, new_url)
 
@@ -181,10 +291,7 @@ class PanoramaService:
                 ],
             )
 
-            return EditRoomResponse(
-                version=version,
-                updated_panorama_url=new_url,
-            )
+            return EditRoomResponse(version=version, updated_panorama_url=new_url)
         finally:
             if temp_path.exists():
                 temp_path.unlink()
@@ -196,11 +303,8 @@ class PanoramaService:
         if data is None:
             return None
 
-        from src.panorama.schemas import RoomPanorama
-
         rooms = []
         for r in data.rooms:
-            # Determine current panorama URL
             if r.current_version_id:
                 for v in r.versions:
                     if v.id == r.current_version_id:
@@ -228,12 +332,26 @@ class PanoramaService:
         )
 
 
+def _sse_event(event: str, data: object) -> str:
+    """Format a Server-Sent Event string."""
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+def _compute_yaw(
+    from_pos: dict[str, int], from_w: int, from_h: int,
+    to_pos: dict[str, int], to_w: int, to_h: int,
+) -> float:
+    ax = from_pos["x"] + from_w / 2
+    ay = from_pos["y"] + from_h / 2
+    bx = to_pos["x"] + to_w / 2
+    by = to_pos["y"] + to_h / 2
+    return math.degrees(math.atan2(bx - ax, -(by - ay)))
+
+
 def _update_pannellum_scene(walkthrough_id: str, room_id: str, new_url: str) -> None:
-    """Update the panorama URL for a room in the stored Pannellum config."""
     walkthrough = _storage.get_walkthrough(walkthrough_id)
     if walkthrough is None:
         return
-
     scenes = walkthrough.pannellum_config.get("scenes", {})
     if isinstance(scenes, dict) and room_id in scenes:
         scene = scenes[room_id]

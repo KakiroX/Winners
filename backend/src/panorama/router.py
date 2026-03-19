@@ -1,6 +1,7 @@
 """Panorama domain API router."""
 
 from fastapi import APIRouter, status
+from fastapi.responses import StreamingResponse
 
 from src.panorama.exceptions import RoomNotFoundError, WalkthroughNotFoundError
 from src.panorama.schemas import (
@@ -20,11 +21,6 @@ router = APIRouter(prefix="/panorama", tags=["panorama"])
     response_model=GenerateWalkthroughResponse,
     status_code=status.HTTP_200_OK,
     description="Generate 360 panoramas for all rooms in a selected floor plan.",
-    responses={
-        status.HTTP_503_SERVICE_UNAVAILABLE: {
-            "description": "Gemini API unavailable or generation failed"
-        },
-    },
 )
 async def generate_walkthrough(
     body: GenerateWalkthroughRequest,
@@ -32,13 +28,28 @@ async def generate_walkthrough(
     return await PanoramaService.generate_walkthrough(body)
 
 
+@router.post(
+    "/generate-walkthrough/stream",
+    description="SSE stream: generate panoramas room-by-room with progress events.",
+)
+async def generate_walkthrough_stream(
+    body: GenerateWalkthroughRequest,
+) -> StreamingResponse:
+    return StreamingResponse(
+        PanoramaService.generate_walkthrough_stream(body),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @router.get(
     "/walkthrough/{walkthrough_id}",
     response_model=WalkthroughSchema,
-    description="Get a walkthrough by ID with current room panoramas and Pannellum config.",
-    responses={
-        status.HTTP_404_NOT_FOUND: {"description": "Walkthrough not found"},
-    },
+    description="Get a walkthrough by ID.",
 )
 async def get_walkthrough(walkthrough_id: str) -> WalkthroughSchema:
     result = await PanoramaService.get_walkthrough(walkthrough_id)
@@ -51,10 +62,6 @@ async def get_walkthrough(walkthrough_id: str) -> WalkthroughSchema:
     "/walkthrough/{walkthrough_id}/room/{room_id}/edit",
     response_model=EditRoomResponse,
     description="Surgically edit a room panorama at a specific pitch/yaw location.",
-    responses={
-        status.HTTP_404_NOT_FOUND: {"description": "Walkthrough or room not found"},
-        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Edit generation failed"},
-    },
 )
 async def edit_room(
     walkthrough_id: str,

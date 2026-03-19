@@ -1,0 +1,270 @@
+{
+  "id": "184c2e38c515",
+  "floor_plan_id": "bf544443-a185-40cf-a86c-b28d4f88faa4",
+  "title": "Suite-First",
+  "created_at": 1773907060.281315,
+  "rooms": [
+    {
+      "room_id": "living-v3",
+      "room_label": "Stateroom",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "kitchen-v3",
+      "room_label": "Island Kitchen",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "hallway-v3",
+      "room_label": "Central Foyer",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "master-v3",
+      "room_label": "Master Suite",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "ensuite-v3",
+      "room_label": "Master Bath",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "bath-v3",
+      "room_label": "Guest Bath",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "bed2-v3",
+      "room_label": "Bedroom 2",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "bed3-v3",
+      "room_label": "Bedroom 3",
+      "versions": [],
+      "current_version_id": ""
+    }
+  ],
+  "pannellum_config": {
+    "default": {
+      "firstScene": "living-v3",
+      "autoLoad": true,
+      "autoRotate": -2,
+      "compass": true,
+      "showZoomCtrl": true,
+      "showFullscreenCtrl": true,
+      "mouseZoom": true,
+      "draggable": true
+    },
+    "scenes": {
+      "living-v3": {
+        "title": "Stateroom",
+        "type": "equirectangular",
+        "panorama": "/panoramas/184c2e38c515/rooms/living-v3.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "d2562827",
+            "pitch": 0.0,
+            "yaw": 90.0,
+            "type": "scene",
+            "text": "Go to Island Kitchen",
+            "sceneId": "kitchen-v3"
+          },
+          {
+            "id": "d9ff20b3",
+            "pitch": 0.0,
+            "yaw": 141.34019174590992,
+            "type": "scene",
+            "text": "Go to Central Foyer",
+            "sceneId": "hallway-v3"
+          }
+        ]
+      },
+      "kitchen-v3": {
+        "title": "Island Kitchen",
+        "type": "equirectangular",
+        "panorama": "/panoramas/184c2e38c515/rooms/kitchen-v3.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "37c454e6",
+            "pitch": 0.0,
+            "yaw": -90.0,
+            "type": "scene",
+            "text": "Go to Stateroom",
+            "sceneId": "living-v3"
+          },
+          {
+            "id": "d31a3644",
+            "pitch": 0.0,
+            "yaw": -141.34019174590992,
+            "type": "scene",
+            "text": "Go to Central Foyer",
+            "sceneId": "hallway-v3"
+          }
+        ]
+      },
+      "hallway-v3": {
+        "title": "Central Foyer",
+        "type": "equirectangular",
+        "panorama": "/panoramas/184c2e38c515/rooms/hallway-v3.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "4f39593f",
+            "pitch": 0.0,
+            "yaw": -38.65980825409009,
+            "type": "scene",
+            "text": "Go to Stateroom",
+            "sceneId": "living-v3"
+          },
+          {
+            "id": "ae2afb8b",
+            "pitch": 0.0,
+            "yaw": -128.6598082540901,
+            "type": "scene",
+            "text": "Go to Master Suite",
+            "sceneId": "master-v3"
+          },
+          {
+            "id": "cc193746",
+            "pitch": 0.0,
+            "yaw": 153.434948822922,
+            "type": "scene",
+            "text": "Go to Bedroom 2",
+            "sceneId": "bed2-v3"
+          },
+          {
+            "id": "408a6561",
+            "pitch": 0.0,
+            "yaw": 123.69006752597979,
+            "type": "scene",
+            "text": "Go to Bedroom 3",
+            "sceneId": "bed3-v3"
+          },
+          {
+            "id": "fa1fa0e2",
+            "pitch": 0.0,
+            "yaw": -153.434948822922,
+            "type": "scene",
+            "text": "Go to Guest Bath",
+            "sceneId": "bath-v3"
+          }
+        ]
+      },
+      "master-v3": {
+        "title": "Master Suite",
+        "type": "equirectangular",
+        "panorama": "/panoramas/184c2e38c515/rooms/master-v3.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "dca458e7",
+            "pitch": 0.0,
+            "yaw": 51.34019174590991,
+            "type": "scene",
+            "text": "Go to Central Foyer",
+            "sceneId": "hallway-v3"
+          },
+          {
+            "id": "57d3a40f",
+            "pitch": 0.0,
+            "yaw": 104.03624346792648,
+            "type": "scene",
+            "text": "Go to Master Bath",
+            "sceneId": "ensuite-v3"
+          }
+        ]
+      },
+      "ensuite-v3": {
+        "title": "Master Bath",
+        "type": "equirectangular",
+        "panorama": "/panoramas/184c2e38c515/rooms/ensuite-v3.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "a1080f3d",
+            "pitch": 0.0,
+            "yaw": -75.96375653207353,
+            "type": "scene",
+            "text": "Go to Master Suite",
+            "sceneId": "master-v3"
+          }
+        ]
+      },
+      "bath-v3": {
+        "title": "Guest Bath",
+        "type": "equirectangular",
+        "panorama": "/panoramas/184c2e38c515/rooms/bath-v3.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "baa3a1a1",
+            "pitch": 0.0,
+            "yaw": 26.56505117707799,
+            "type": "scene",
+            "text": "Go to Central Foyer",
+            "sceneId": "hallway-v3"
+          }
+        ]
+      },
+      "bed2-v3": {
+        "title": "Bedroom 2",
+        "type": "equirectangular",
+        "panorama": "/panoramas/184c2e38c515/rooms/bed2-v3.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "7ed16495",
+            "pitch": 0.0,
+            "yaw": -26.56505117707799,
+            "type": "scene",
+            "text": "Go to Central Foyer",
+            "sceneId": "hallway-v3"
+          }
+        ]
+      },
+      "bed3-v3": {
+        "title": "Bedroom 3",
+        "type": "equirectangular",
+        "panorama": "/panoramas/184c2e38c515/rooms/bed3-v3.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "ec574d10",
+            "pitch": 0.0,
+            "yaw": -56.309932474020215,
+            "type": "scene",
+            "text": "Go to Central Foyer",
+            "sceneId": "hallway-v3"
+          }
+        ]
+      }
+    }
+  }
+}
