@@ -22,5 +22,12 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000"]
     api_v1_prefix: str = "/api/v1"
 
+    # Database
+    database_url: str = "postgresql+asyncpg://inhabit:inhabit@localhost:5432/inhabit"
+
+    # Google Cloud Storage
+    gcs_bucket: str = "inhabit-panoramas"
+    gcs_key_path: str = ""
+
 
 settings = Settings()

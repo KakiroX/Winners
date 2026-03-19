@@ -59,11 +59,8 @@ export function PannellumViewer({ config, className = '', onPanoramaClick, onSce
       viewerRef.current = null;
     }
 
-    // Resolve panorama URLs to absolute backend URLs
-    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') ?? 'http://localhost:8000';
-    const resolvedConfig = resolveImageUrls(config, apiBase);
-
-    const viewer = window.pannellum.viewer(containerRef.current, resolvedConfig as unknown as Record<string, unknown>);
+    // Panorama URLs are now absolute GCS URLs — no resolution needed
+    const viewer = window.pannellum.viewer(containerRef.current, config as unknown as Record<string, unknown>);
     viewerRef.current = viewer;
 
     // Track scene changes
@@ -101,14 +98,4 @@ export function PannellumViewer({ config, className = '', onPanoramaClick, onSce
   }, [handleMouseDown, handleMouseUp]);
 
   return <div ref={containerRef} id="panorama" className={className} />;
-}
-
-function resolveImageUrls(config: PannellumConfig, apiBase: string): PannellumConfig {
-  const resolved = structuredClone(config);
-  for (const scene of Object.values(resolved.scenes)) {
-    if (scene.panorama.startsWith('/')) {
-      scene.panorama = `${apiBase}${scene.panorama}`;
-    }
-  }
-  return resolved;
 }

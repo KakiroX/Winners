@@ -1,20 +1,47 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: inhabit
+      POSTGRES_PASSWORD: inhabit
+      POSTGRES_DB: inhabit
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inhabit"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://inhabit:inhabit@postgres:5432/inhabit
+      GCS_KEY_PATH: /secrets/gcs-key.json
     volumes:
       - ./backend/src:/app/src
+      - ./raven-462512-57aee9507704.json:/secrets/gcs-key.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
     ports:
       - "3000:3000"
-    env_file:
-      - .env
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -1,0 +1,294 @@
+{
+  "id": "af5acec1582f",
+  "floor_plan_id": "d9a473d0-3894-4195-aeb0-107bdc152429",
+  "title": "Split Layout",
+  "created_at": 1773911170.88349,
+  "rooms": [
+    {
+      "room_id": "v2-living",
+      "room_label": "Living Room",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "v2-kitchen",
+      "room_label": "Kitchen",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "v2-master",
+      "room_label": "Master Bedroom",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "v2-mbath",
+      "room_label": "Master Bath",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "v2-bed2",
+      "room_label": "Bedroom 2",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "v2-bed3",
+      "room_label": "Bedroom 3",
+      "versions": [],
+      "current_version_id": ""
+    },
+    {
+      "room_id": "v2-bath2",
+      "room_label": "Guest Bath",
+      "versions": [],
+      "current_version_id": ""
+    }
+  ],
+  "pannellum_config": {
+    "default": {
+      "firstScene": "v2-living",
+      "autoLoad": true,
+      "autoRotate": -2,
+      "compass": true,
+      "showZoomCtrl": true,
+      "showFullscreenCtrl": true,
+      "mouseZoom": true,
+      "draggable": true
+    },
+    "scenes": {
+      "v2-living": {
+        "title": "Living Room",
+        "type": "equirectangular",
+        "panorama": "/panoramas/af5acec1582f/rooms/v2-living.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "2dfa70b1",
+            "pitch": 0.0,
+            "yaw": 180.0,
+            "type": "scene",
+            "text": "Go to Kitchen",
+            "sceneId": "v2-kitchen"
+          },
+          {
+            "id": "5e6cb739",
+            "pitch": 0.0,
+            "yaw": -90.0,
+            "type": "scene",
+            "text": "Go to Master Bedroom",
+            "sceneId": "v2-master"
+          },
+          {
+            "id": "c9b1fbfc",
+            "pitch": 0.0,
+            "yaw": 81.86989764584403,
+            "type": "scene",
+            "text": "Go to Bedroom 2",
+            "sceneId": "v2-bed2"
+          }
+        ]
+      },
+      "v2-kitchen": {
+        "title": "Kitchen",
+        "type": "equirectangular",
+        "panorama": "/panoramas/af5acec1582f/rooms/v2-kitchen.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "e649cdfa",
+            "pitch": 0.0,
+            "yaw": 0.0,
+            "type": "scene",
+            "text": "Go to Living Room",
+            "sceneId": "v2-living"
+          },
+          {
+            "id": "4503ab26",
+            "pitch": 0.0,
+            "yaw": -90.0,
+            "type": "scene",
+            "text": "Go to Master Bath",
+            "sceneId": "v2-mbath"
+          },
+          {
+            "id": "b6e1888f",
+            "pitch": 0.0,
+            "yaw": 49.398705354995535,
+            "type": "scene",
+            "text": "Go to Bedroom 2",
+            "sceneId": "v2-bed2"
+          },
+          {
+            "id": "844884b1",
+            "pitch": 0.0,
+            "yaw": 74.05460409907715,
+            "type": "scene",
+            "text": "Go to Bedroom 3",
+            "sceneId": "v2-bed3"
+          },
+          {
+            "id": "b84fd409",
+            "pitch": 0.0,
+            "yaw": 98.13010235415598,
+            "type": "scene",
+            "text": "Go to Guest Bath",
+            "sceneId": "v2-bath2"
+          }
+        ]
+      },
+      "v2-master": {
+        "title": "Master Bedroom",
+        "type": "equirectangular",
+        "panorama": "/panoramas/af5acec1582f/rooms/v2-master.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "429a0560",
+            "pitch": 0.0,
+            "yaw": 90.0,
+            "type": "scene",
+            "text": "Go to Living Room",
+            "sceneId": "v2-living"
+          },
+          {
+            "id": "d7fa3d35",
+            "pitch": 0.0,
+            "yaw": 180.0,
+            "type": "scene",
+            "text": "Go to Master Bath",
+            "sceneId": "v2-mbath"
+          }
+        ]
+      },
+      "v2-mbath": {
+        "title": "Master Bath",
+        "type": "equirectangular",
+        "panorama": "/panoramas/af5acec1582f/rooms/v2-mbath.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "22af4686",
+            "pitch": 0.0,
+            "yaw": 0.0,
+            "type": "scene",
+            "text": "Go to Master Bedroom",
+            "sceneId": "v2-master"
+          },
+          {
+            "id": "34ca2e52",
+            "pitch": 0.0,
+            "yaw": 90.0,
+            "type": "scene",
+            "text": "Go to Kitchen",
+            "sceneId": "v2-kitchen"
+          }
+        ]
+      },
+      "v2-bed2": {
+        "title": "Bedroom 2",
+        "type": "equirectangular",
+        "panorama": "/panoramas/af5acec1582f/rooms/v2-bed2.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "a74828c0",
+            "pitch": 0.0,
+            "yaw": -98.13010235415598,
+            "type": "scene",
+            "text": "Go to Living Room",
+            "sceneId": "v2-living"
+          },
+          {
+            "id": "e711e382",
+            "pitch": 0.0,
+            "yaw": -130.6012946450045,
+            "type": "scene",
+            "text": "Go to Kitchen",
+            "sceneId": "v2-kitchen"
+          },
+          {
+            "id": "e6d2347c",
+            "pitch": 0.0,
+            "yaw": 180.0,
+            "type": "scene",
+            "text": "Go to Bedroom 3",
+            "sceneId": "v2-bed3"
+          }
+        ]
+      },
+      "v2-bed3": {
+        "title": "Bedroom 3",
+        "type": "equirectangular",
+        "panorama": "/panoramas/af5acec1582f/rooms/v2-bed3.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "c5a73eba",
+            "pitch": 0.0,
+            "yaw": -105.94539590092286,
+            "type": "scene",
+            "text": "Go to Kitchen",
+            "sceneId": "v2-kitchen"
+          },
+          {
+            "id": "ac3f37f0",
+            "pitch": 0.0,
+            "yaw": 0.0,
+            "type": "scene",
+            "text": "Go to Bedroom 2",
+            "sceneId": "v2-bed2"
+          },
+          {
+            "id": "6dad0daf",
+            "pitch": 0.0,
+            "yaw": 180.0,
+            "type": "scene",
+            "text": "Go to Guest Bath",
+            "sceneId": "v2-bath2"
+          }
+        ]
+      },
+      "v2-bath2": {
+        "title": "Guest Bath",
+        "type": "equirectangular",
+        "panorama": "/panoramas/af5acec1582f/rooms/v2-bath2.jpg",
+        "hfov": 110,
+        "yaw": 0,
+        "pitch": 0,
+        "hotSpots": [
+          {
+            "id": "bd4184d9",
+            "pitch": 0.0,
+            "yaw": -81.86989764584403,
+            "type": "scene",
+            "text": "Go to Kitchen",
+            "sceneId": "v2-kitchen"
+          },
+          {
+            "id": "60593cb4",
+            "pitch": 0.0,
+            "yaw": 0.0,
+            "type": "scene",
+            "text": "Go to Bedroom 3",
+            "sceneId": "v2-bed3"
+          }
+        ]
+      }
+    }
+  }
+}
