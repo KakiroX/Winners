@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class RoomType(StrEnum):
@@ -31,12 +31,20 @@ class RoomSchema(BaseModel):
     type: RoomType
     label: str
     area_sqm: float = Field(gt=0)
-    width_units: int = Field(ge=2)
-    height_units: int = Field(ge=2)
+    width_units: int = Field(ge=1)
+    height_units: int = Field(ge=1)
     position: dict[str, int]
     connections: list[str]
     features: list[RoomFeature] = []
     natural_light: str
+
+    @field_validator("features", mode="before")
+    @classmethod
+    def drop_unknown_features(cls, v: object) -> list[str]:
+        if not isinstance(v, list):
+            return []
+        valid = {f.value for f in RoomFeature}
+        return [item for item in v if item in valid]
 
 
 class FloorPlanSchema(BaseModel):

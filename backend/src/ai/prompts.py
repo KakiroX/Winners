@@ -20,9 +20,10 @@ GENERATE_SCHEMAS_TEMPLATE = ChatPromptTemplate.from_messages([
     ("system", """You are a generative floor plan architect.
 Based on the interpreted space requirements, generate exactly 3 or 4 distinct floor plan layout variants.
 
-Rules:
+STRICT rules — violating any of these will cause a retry:
 - Each variant must have a unique spatial logic with a label: "Open Flow", "Split Layout", "Compact", or "Suite-First"
 - Rooms use grid-based positioning with integer grid units (NOT pixels or meters)
+- width_units and height_units must each be >= 1
 - Rooms that are adjacent must share an edge — connections[] must reflect real geometry
 - grid_cols and grid_rows must contain all rooms without overflow
 - area_sqm values must sum to approximately total_area_sqm
@@ -30,6 +31,9 @@ Rules:
 - style_notes is 1 sentence of design rationale shown to the user on the selection card
 - Each room MUST have a unique string id (use short slugs like "living-room-1", "bedroom-1", etc.)
 - connections[] must reference other rooms by their id field
+- natural_light must be exactly one of: "high", "medium", "low"
+- type must be exactly one of: "living_room", "kitchen", "bedroom", "bathroom", "office", "dining_room", "hallway", "balcony", "storage"
+- features[] must ONLY contain values from this exact list: "window_north", "window_south", "window_east", "window_west", "en_suite", "island", "walk_in", "open_to_next". Do NOT invent new feature values.
 
 Respond with ONLY valid JSON — no markdown fences, no explanation, no preamble:
 {{
@@ -59,6 +63,6 @@ Respond with ONLY valid JSON — no markdown fences, no explanation, no preamble
   ]
 }}
 
-This is attempt number {attempt}. If attempt > 0, vary the spatial logic more aggressively."""),
+{error_context}"""),
     ("human", "Space requirements:\n{interpretation}"),
 ])

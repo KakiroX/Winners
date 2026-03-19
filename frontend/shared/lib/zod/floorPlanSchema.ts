@@ -17,11 +17,11 @@ const roomSchema = z.object({
   type: roomTypeSchema,
   label: z.string(),
   area_sqm: z.number().positive(),
-  width_units: z.number().int().min(2),
-  height_units: z.number().int().min(2),
+  width_units: z.number().int().min(1),
+  height_units: z.number().int().min(1),
   position: z.object({ x: z.number().int(), y: z.number().int() }),
   connections: z.array(z.string()),
-  features: z.array(roomFeatureSchema).default([]),
+  features: z.array(z.string()).default([]),
   natural_light: naturalLightSchema,
 });
 
