@@ -114,24 +114,24 @@ class PanoramaService:
                 ],
             )
 
-            # --- Phase 1: Generate each room panorama ---
-            for i, room in enumerate(request.rooms):
-                yield _sse("progress", {
-                    "phase": "generating",
-                    "current": i,
-                    "total": total_rooms,
-                    "room_label": room.label,
-                })
+            # --- Phase 1: Generate all room panoramas in parallel ---
+            yield _sse("progress", {
+                "phase": "generating",
+                "current": 0,
+                "total": total_rooms,
+                "room_label": "Generating all rooms simultaneously...",
+            })
 
+            async def generate_room_task(room_input):
                 try:
-                    # Build connection metadata with yaw angles for door placement
+                    # Build connection metadata
                     connections: list[dict[str, object]] = []
-                    for cid in room.connections:
+                    for cid in room_input.connections:
                         target = rooms_by_id.get(cid)
                         if target is None:
                             continue
                         yaw = _compute_yaw(
-                            room.position, room.width_units, room.height_units,
+                            room_input.position, room_input.width_units, room_input.height_units,
                             target.position, target.width_units, target.height_units,
                         )
                         connections.append({
@@ -141,51 +141,54 @@ class PanoramaService:
                         })
 
                     prompt = build_room_prompt(
-                        room_label=room.label,
-                        room_type=room.type,
-                        area_sqm=room.area_sqm,
-                        features=room.features,
-                        natural_light=room.natural_light,
+                        room_label=room_input.label,
+                        room_type=room_input.type,
+                        area_sqm=room_input.area_sqm,
+                        features=room_input.features,
+                        natural_light=room_input.natural_light,
                         aesthetic_tags=request.aesthetic_tags,
                         style_notes=request.style_notes,
                         connections=connections,
                         user_style_prompt=request.user_style_prompt,
-                        width_units=room.width_units,
-                        height_units=room.height_units,
+                        width_units=room_input.width_units,
+                        height_units=room_input.height_units,
                     )
 
                     result = await asyncio.to_thread(generator.generate, prompt)
 
-                    # Upload to GCS and save as Version 1
-                    version = await storage.save_room_version(
-                        walkthrough_id=generation_id,
-                        room_id=room.id,
-                        image=result.image,
-                        prompt_used="Initial Generation",
-                        hotspots=[],
-                    )
-                    generated[room.id] = version.image_url
-
-                    # Trigger background BOM sourcing
-                    if background_tasks:
-                        background_tasks.add_task(background_bom_sourcing, version.id, result.image)
-
-                    yield _sse("room_done", {
-                        "current": i + 1,
-                        "total": total_rooms,
-                        "room_label": room.label,
-                        "room_id": room.id,
-                    })
-
+                    # --- IMPORTANT: Use a FRESH session for each parallel task ---
+                    async with async_session_factory() as task_session:
+                        task_storage = PanoramaStorage(task_session)
+                        version = await task_storage.save_room_version(
+                            walkthrough_id=generation_id,
+                            room_id=room_input.id,
+                            image=result.image,
+                            prompt_used="Initial Generation",
+                            hotspots=[],
+                        )
+                        
+                        # Trigger background BOM sourcing
+                        if background_tasks:
+                            background_tasks.add_task(background_bom_sourcing, version.id, result.image)
+                            
+                        return room_input.id, version.image_url, None
                 except Exception as e:
-                    logger.error("Failed to generate room %s: %s", room.id, str(e))
-                    errors[room.id] = str(e)
-                    yield _sse("room_error", {
-                        "current": i + 1,
-                        "total": total_rooms,
-                        "room_label": room.label,
-                        "error": str(e),
-                    })
+                    logger.error("Failed to generate room %s: %s", room_input.id, str(e))
+                    return room_input.id, None, str(e)
+
+            # Execute all room generations in parallel
+            tasks = [generate_room_task(r) for r in request.rooms]
+            task_results = await asyncio.gather(*tasks)
+
+            for rid, url, err in task_results:
+                if url:
+                    generated[rid] = url
+                if err:
+                    errors[rid] = err
+
+            if not generated:
+                yield _sse("error", {"message": "Failed to generate any panoramas"})
+                return
 
             if not generated:
                 yield _sse("error", {"message": "Failed to generate any panoramas"})
