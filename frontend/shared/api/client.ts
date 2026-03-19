@@ -4,6 +4,7 @@ import { env } from '@/shared/config/env';
 export const apiClient = axios.create({
   baseURL: env.apiUrl,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,  // send httpOnly auth_token cookie on every request
 });
 
 apiClient.interceptors.response.use(

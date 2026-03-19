@@ -23,6 +23,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     async with engine.begin() as conn:
         # Import models so they register with Base
         import src.panorama.models  # noqa: F401
+        import src.users.models  # noqa: F401
         await conn.run_sync(Base.metadata.create_all)
 
     yield
@@ -39,6 +40,7 @@ app = FastAPI(**app_config)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -47,6 +49,8 @@ register_exception_handlers(app)
 
 from src.floor_plan.router import router as floor_plan_router  # noqa: E402
 from src.panorama.router import router as panorama_router  # noqa: E402
+from src.users.router import router as auth_router  # noqa: E402
 
+app.include_router(auth_router, prefix=settings.api_v1_prefix)
 app.include_router(floor_plan_router, prefix=settings.api_v1_prefix)
 app.include_router(panorama_router, prefix=settings.api_v1_prefix)

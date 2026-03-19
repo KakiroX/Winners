@@ -29,5 +29,9 @@ class Settings(BaseSettings):
     gcs_bucket: str = "inhabit-panoramas"
     gcs_key_path: str = ""
 
+    # JWT
+    jwt_secret_key: str = "change-me-in-production-use-a-long-random-string"
+    jwt_expire_days: int = 30
+
 
 settings = Settings()

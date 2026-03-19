@@ -1,19 +1,31 @@
 'use client';
 
 import { useState } from 'react';
+import { apiClient } from '@/shared/api/client';
 import { useAuthStore } from '../model/useAuthStore';
 
 export function LoginModal() {
   const { isLoginModalOpen, closeLogin, openSignup, setUser } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   if (!isLoginModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUser({ id: '1', email, name: email.split('@')[0] });
-    closeLogin();
+    setError('');
+    setLoading(true);
+    try {
+      const { data } = await apiClient.post('/auth/login', { email, password });
+      setUser(data.user);
+      closeLogin();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,7 +39,7 @@ export function LoginModal() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
-              <input 
+              <input
                 type="email" required value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
@@ -36,18 +48,20 @@ export function LoginModal() {
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
-              <input 
+              <input
                 type="password" required value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 placeholder="••••••••"
               />
             </div>
-            <button 
+            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+            <button
               type="submit"
-              className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all active:scale-[0.98]"
+              disabled={loading}
+              className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all active:scale-[0.98] disabled:opacity-60"
             >
-              Sign In
+              {loading ? 'Signing in…' : 'Sign In'}
             </button>
           </form>
           <div className="text-center">

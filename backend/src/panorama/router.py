@@ -1,6 +1,6 @@
 """Panorama domain API router."""
 
-from fastapi import APIRouter, BackgroundTasks, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from fastapi.responses import StreamingResponse
 
 from src.panorama.exceptions import RoomNotFoundError, WalkthroughNotFoundError
@@ -12,6 +12,8 @@ from src.panorama.schemas import (
     WalkthroughSchema,
 )
 from src.panorama.service import PanoramaService
+from src.users.dependencies import get_current_user, get_optional_current_user
+from src.users.models import UserModel
 
 router = APIRouter(prefix="/panorama", tags=["panorama"])
 
@@ -24,7 +26,10 @@ router = APIRouter(prefix="/panorama", tags=["panorama"])
 )
 async def generate_walkthrough(
     body: GenerateWalkthroughRequest,
+    current_user: UserModel | None = Depends(get_optional_current_user),
 ) -> GenerateWalkthroughResponse:
+    if current_user:
+        body.user_id = current_user.id
     return await PanoramaService.generate_walkthrough(body)
 
 
@@ -35,7 +40,10 @@ async def generate_walkthrough(
 async def generate_walkthrough_stream(
     body: GenerateWalkthroughRequest,
     background_tasks: BackgroundTasks,
+    current_user: UserModel | None = Depends(get_optional_current_user),
 ) -> StreamingResponse:
+    if current_user:
+        body.user_id = current_user.id
     return StreamingResponse(
         PanoramaService.generate_walkthrough_stream(body, background_tasks),
         media_type="text/event-stream",
@@ -61,10 +69,12 @@ async def get_walkthrough(walkthrough_id: str) -> WalkthroughSchema:
 
 @router.get(
     "/walkthroughs",
-    description="List all walkthroughs for a user.",
+    description="List all walkthroughs for the authenticated user.",
 )
-async def list_walkthroughs(user_id: str = "guest"):
-    return await PanoramaService.list_walkthroughs(user_id)
+async def list_walkthroughs(
+    current_user: UserModel = Depends(get_current_user),
+):
+    return await PanoramaService.list_walkthroughs(current_user.id)
 
 
 @router.get(
