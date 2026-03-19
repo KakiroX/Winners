@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     )
 
     google_api_key: str
-    gemini_model: str = "gemini-flash-3.1-preview"
-    gemini_image_model: str = "gemini-flash-3.1-image-preview"
+    gemini_model: str = "gemini-3-flash-preview"
+    gemini_image_model: str = "gemini-3.1-flash-image-preview"
     gemini_temperature: float = 0.7
     gemini_max_retries: int = 3
 

@@ -1,4 +1,4 @@
-import { GeneratePage } from '@/pages/generate';
+import { GeneratePage } from '@/views/generate';
 
 export default function Page() {
   return <GeneratePage />;
