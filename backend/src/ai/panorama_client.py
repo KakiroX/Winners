@@ -73,6 +73,10 @@ class PanoramaGenerator:
             contents=[prompt],
             config=types.GenerateContentConfig(
                 response_modalities=["TEXT", "IMAGE"],
+                image_config=types.ImageConfig(
+                    aspect_ratio="16:9",
+                    image_size="2K",
+                ),
             ),
         )
 
@@ -110,6 +114,10 @@ class PanoramaGenerator:
             contents=[edit_prompt, *context_images],
             config=types.GenerateContentConfig(
                 response_modalities=["TEXT", "IMAGE"],
+                image_config=types.ImageConfig(
+                    aspect_ratio="16:9",
+                    image_size="2K",
+                ),
             ),
         )
 
