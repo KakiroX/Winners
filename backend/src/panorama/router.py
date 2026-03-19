@@ -67,6 +67,29 @@ async def get_walkthrough_bom(walkthrough_id: str):
     return await PanoramaService.get_walkthrough_bom(walkthrough_id)
 
 
+@router.get(
+    "/walkthrough/{walkthrough_id}/room/{room_id}/versions",
+    description="Get all versions of a specific room.",
+)
+async def get_room_versions(
+    walkthrough_id: str,
+    room_id: str,
+):
+    return await PanoramaService.get_room_versions(walkthrough_id, room_id)
+
+
+@router.post(
+    "/walkthrough/{walkthrough_id}/room/{room_id}/revert/{version_id}",
+    description="Revert a room to a previous version.",
+)
+async def revert_room_version(
+    walkthrough_id: str,
+    room_id: str,
+    version_id: str,
+):
+    return await PanoramaService.revert_room_version(walkthrough_id, room_id, version_id)
+
+
 @router.post(
     "/walkthrough/{walkthrough_id}/room/{room_id}/edit",
     response_model=EditRoomResponse,

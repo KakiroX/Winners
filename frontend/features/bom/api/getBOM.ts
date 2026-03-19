@@ -10,8 +10,13 @@ export interface BOMItem {
   room_label?: string;
 }
 
+export interface BOMResponse {
+  items: BOMItem[];
+  logs: Record<string, string[]>;
+}
+
 export function useWalkthroughBOM(walkthroughId: string | null) {
-  return useQuery<BOMItem[]>({
+  return useQuery<BOMResponse>({
     queryKey: ['walkthrough-bom', walkthroughId],
     queryFn: async () => {
       const resp = await apiClient.get(`/panorama/walkthrough/${walkthroughId}/bom`);
@@ -19,9 +24,17 @@ export function useWalkthroughBOM(walkthroughId: string | null) {
     },
     enabled: !!walkthroughId,
     refetchInterval: (query) => {
-      // If any items are missing or it's empty, refetch every 5s while modal is open
       const data = query.state.data;
-      if (!data || data.length === 0) return 5000;
+      // If there are still active logs, keep polling every 3 seconds
+      if (data && Object.keys(data.logs).length > 0) {
+        // Check if any log doesn't end with "Task complete" or "Error"
+        const isStillWorking = Object.values(data.logs).some(roomLogs => {
+            const lastLog = roomLogs[roomLogs.length - 1];
+            return !lastLog.includes('Task complete') && !lastLog.includes('Error');
+        });
+        if (isStillWorking) return 3000;
+      }
+      // If we have items but no logs, or logs are done, stop polling
       return false;
     }
   });

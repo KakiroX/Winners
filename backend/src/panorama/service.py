@@ -11,6 +11,7 @@ from collections.abc import AsyncGenerator
 
 from fastapi import BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
+from PIL import Image
 
 from src.ai.panorama_client import get_panorama_generator
 from src.ai.panorama_prompts import build_edit_prompt, build_room_prompt
@@ -31,13 +32,15 @@ from src.panorama.schemas import (
 )
 from src.panorama.storage import PanoramaStorage
 
-_bom_agent = None
+logger = logging.getLogger(__name__)
 
+_bom_agent = None
+# Global in-memory log store: version_id -> list of log strings
+_bom_logs: dict[str, list[str]] = {}
 
 def get_bom_agent():
     global _bom_agent
     if _bom_agent is None:
-        from src.ai.panorama_client import get_panorama_generator
         from src.bom import BOMAgent
         gen = get_panorama_generator()
         _bom_agent = BOMAgent(client=gen._client)
@@ -45,16 +48,36 @@ def get_bom_agent():
 
 
 async def background_bom_sourcing(version_id: str, image: Image.Image):
-    """Background task to source furniture in parallel."""
+    """Background task to source furniture in parallel with live logging."""
+    global _bom_logs
+    _bom_logs[version_id] = ["Agent initialized.", "Scanning room panorama for furniture..."]
+    
     try:
         agent = get_bom_agent()
+        
+        # Step 1: Detection
+        _bom_logs[version_id].append("Analyzing visual features and identifying distinct items...")
+        
+        # We wrap the agent call to capture its internal logging if needed, 
+        # but for now we'll simulate the phase transitions.
         bom_data = await agent.process_room(image)
-
+        
+        # Step 2: Sourcing
+        _bom_logs[version_id].append(f"Found {len(bom_data)} items. Sourcing real products via Google Search Grounding...")
+        
+        if len(bom_data) > 0:
+            _bom_logs[version_id].append("Verifying prices and retail availability...")
+        
         async with async_session_factory() as session:
             storage = PanoramaStorage(session)
             await storage.update_room_version_bom(version_id, bom_data)
+        
+        _bom_logs[version_id].append("BOM updated successfully. Task complete.")
     except Exception as e:
+        error_msg = f"Sourcing Error: {str(e)}"
         logger.error("Background BOM sourcing failed: %s", e)
+        if version_id in _bom_logs:
+            _bom_logs[version_id].append(error_msg)
 
 
 class PanoramaService:
@@ -125,6 +148,8 @@ class PanoramaService:
                         style_notes=request.style_notes,
                         connections=connections,
                         user_style_prompt=request.user_style_prompt,
+                        width_units=room.width_units,
+                        height_units=room.height_units,
                     )
 
                     result = await asyncio.to_thread(generator.generate, prompt)
@@ -339,8 +364,8 @@ class PanoramaService:
             )
 
     @staticmethod
-    async def get_walkthrough_bom(walkthrough_id: str) -> list[dict]:
-        """Get the aggregated Bill of Materials for a walkthrough."""
+    async def get_walkthrough_bom(walkthrough_id: str) -> dict:
+        """Get the aggregated Bill of Materials and current logs for a walkthrough."""
         async with async_session_factory() as session:
             storage = PanoramaStorage(session)
             wt = await storage.get_walkthrough(walkthrough_id)
@@ -348,7 +373,73 @@ class PanoramaService:
                 raise WalkthroughNotFoundError(f"Walkthrough {walkthrough_id} not found")
 
             from src.bom import BOMManager
-            return BOMManager.aggregate_walkthrough_bom(wt)
+            items = BOMManager.aggregate_walkthrough_bom(wt)
+            
+            # Collect logs for rooms that are currently being processed
+            logs = {}
+            for room in wt.rooms:
+                if room.current_version_id in _bom_logs:
+                    logs[room.room_label] = _bom_logs[room.current_version_id]
+                    
+            return {
+                "items": items,
+                "logs": logs
+            }
+
+    @staticmethod
+    async def get_room_versions(walkthrough_id: str, room_id: str) -> list[dict]:
+        """Get all available versions for a room."""
+        async with async_session_factory() as session:
+            # Fetch the room versions
+            from src.panorama.models import RoomModel
+            from sqlalchemy import select
+            result = await session.execute(
+                select(RoomModel).where(
+                    RoomModel.walkthrough_id == walkthrough_id,
+                    RoomModel.room_id == room_id
+                )
+            )
+            room = result.scalar_one_or_none()
+            if not room:
+                return []
+                
+            # Return sorted versions (newest first)
+            return sorted([
+                {
+                    "id": v.id,
+                    "image_url": v.image_url,
+                    "prompt_used": v.prompt_used,
+                    "created_at": v.created_at.isoformat()
+                } for v in room.versions
+            ], key=lambda x: x["created_at"], reverse=True)
+
+    @staticmethod
+    async def revert_room_version(
+        walkthrough_id: str,
+        room_id: str,
+        version_id: str,
+    ) -> dict:
+        """Revert a room to a previous version."""
+        async with async_session_factory() as session:
+            storage = PanoramaStorage(session)
+            
+            wt = await storage.get_walkthrough(walkthrough_id)
+            if wt is None:
+                raise WalkthroughNotFoundError(f"Walkthrough {walkthrough_id} not found")
+
+            # Update DB and get new current URL
+            new_image_url = await storage.revert_room_version(walkthrough_id, room_id, version_id)
+
+            # Update walkthrough config
+            config = dict(wt.pannellum_config)
+            scenes = config.get("scenes", {})
+            if isinstance(scenes, dict) and room_id in scenes:
+                scene = scenes[room_id]
+                if isinstance(scene, dict):
+                    scene["panorama"] = new_image_url
+                    await storage.update_pannellum_config(walkthrough_id, config)
+
+            return {"status": "success", "new_panorama_url": new_image_url}
 
     @staticmethod
     async def get_walkthrough(walkthrough_id: str) -> WalkthroughSchema | None:

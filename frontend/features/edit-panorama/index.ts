@@ -1,3 +1,5 @@
-export { useEditRoom } from './api/editPanorama';
-export { useEditStore } from './model/useEditStore';
-export { EditPanel } from './ui/EditPanel';
+export * from './ui/EditPanel';
+export * from './model/useEditStore';
+export * from './api/editPanorama';
+export * from './ui/VersionsModal';
+export * from './api/roomVersions';

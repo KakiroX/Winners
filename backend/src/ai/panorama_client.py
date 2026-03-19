@@ -59,7 +59,9 @@ class PanoramaGenerator:
         from google import genai
 
         self._client = genai.Client(api_key=settings.google_api_key)
-        self._model = model or settings.gemini_image_model
+        # Use gemini-3-pro-image-preview which is currently the primary model
+        # supporting high-quality IMAGE + TEXT output modality.
+        self._model = model or "gemini-3-pro-image-preview"
         logger.info("PanoramaGenerator initialised with model: %s", self._model)
 
     def generate(self, prompt: str) -> PanoramaResult:
@@ -73,10 +75,6 @@ class PanoramaGenerator:
             contents=[prompt],
             config=types.GenerateContentConfig(
                 response_modalities=["TEXT", "IMAGE"],
-                image_config=types.ImageConfig(
-                    aspect_ratio="16:9",
-                    image_size="2K",
-                ),
             ),
         )
 
@@ -114,10 +112,6 @@ class PanoramaGenerator:
             contents=[edit_prompt, *context_images],
             config=types.GenerateContentConfig(
                 response_modalities=["TEXT", "IMAGE"],
-                image_config=types.ImageConfig(
-                    aspect_ratio="16:9",
-                    image_size="2K",
-                ),
             ),
         )
 

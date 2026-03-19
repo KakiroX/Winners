@@ -156,6 +156,31 @@ class PanoramaStorage:
         )
         await self.session.commit()
 
+    async def revert_room_version(self, walkthrough_id: str, room_id: str, version_id: str) -> str:
+        """Revert a room to a previous version ID. Returns the new current image URL."""
+        from sqlalchemy import update
+        
+        # 1. Verify the version exists and belongs to the room
+        result = await self.session.execute(
+            select(RoomModel).where(
+                RoomModel.walkthrough_id == walkthrough_id,
+                RoomModel.room_id == room_id
+            )
+        )
+        room = result.scalar_one_or_none()
+        if not room:
+            raise ValueError(f"Room {room_id} not found")
+            
+        version = next((v for v in room.versions if v.id == version_id), None)
+        if not version:
+            raise ValueError(f"Version {version_id} not found for room {room_id}")
+            
+        # 2. Update current_version_id
+        room.current_version_id = version_id
+        await self.session.commit()
+        
+        return version.image_url
+
     async def get_room_current_image_url(
         self,
         walkthrough_id: str,
