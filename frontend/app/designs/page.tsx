@@ -1,5 +1,10 @@
+import { AuthGuard } from '@/features/auth';
 import { DesignsPage } from '@/views/designs';
 
 export default function Page() {
-  return <DesignsPage />;
+  return (
+    <AuthGuard>
+      <DesignsPage />
+    </AuthGuard>
+  );
 }
