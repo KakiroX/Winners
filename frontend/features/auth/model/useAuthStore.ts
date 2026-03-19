@@ -8,6 +8,7 @@ export interface AuthUser {
 
 interface AuthStore {
   user: AuthUser | null;
+  isAuthReady: boolean;
   isLoginModalOpen: boolean;
   isSignupModalOpen: boolean;
 
@@ -21,10 +22,11 @@ interface AuthStore {
 
 export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
+  isAuthReady: false,
   isLoginModalOpen: false,
   isSignupModalOpen: false,
 
-  setUser: (user) => set({ user }),
+  setUser: (user) => set({ user, isAuthReady: true }),
   openLogin: () => set({ isLoginModalOpen: true, isSignupModalOpen: false }),
   closeLogin: () => set({ isLoginModalOpen: false }),
   openSignup: () => set({ isSignupModalOpen: true, isLoginModalOpen: false }),

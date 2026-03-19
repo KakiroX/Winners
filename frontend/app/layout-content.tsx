@@ -5,7 +5,7 @@ import { Header } from '@/shared/ui/Header';
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const noHeader = ['/', '/features', '/generate', '/plan'].some((p) => pathname === p)
+  const noHeader = ['/', '/features', '/plan'].some((p) => pathname === p)
     || pathname?.includes('/walkthrough/');
 
   return (
