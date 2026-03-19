@@ -19,7 +19,11 @@ class Settings(BaseSettings):
     gemini_max_retries: int = 3
 
     environment: str = "local"
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "https://dehabit.tech",
+        "https://www.dehabit.tech",
+    ]
     api_v1_prefix: str = "/api/v1"
 
     # Database
