@@ -1,5 +1,5 @@
-# Winners
-Winner team's github repo, best project overall
+# Nis Jemel
+Our github repo
 
 Introducing Dehabit by NIS Taraz and ISSA
 On-demand web-service for generative interior design and viewing, making batch generation of designs effective and efficient.
